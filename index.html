@@ -979,6 +979,29 @@
   .move-mode .list-header {
     cursor: move !important;
   }
+
+  .btn-copy-elements {
+  margin: 0;
+  background: #666;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  font-size: 16px;
+  line-height: 0;
+  font-weight: normal;
+  cursor: pointer;
+  border: none;
+  color: white;
+}
+
+.btn-copy-elements:hover {
+  background: #777;
+}
+
+.btn-copy-elements.active {
+  background: #007acc;
+  color: white;
+}
 </style>
 </head>
 <body>
@@ -1187,6 +1210,8 @@
   const startPageInput = document.getElementById('startPageInput');
   const searchEngineSelect = document.getElementById('searchEngineSelect');
   const btnSaveSettings = document.getElementById('btnSaveSettings');
+  var isCopyModeActive = false;
+
 
 
 
@@ -2241,7 +2266,7 @@
     saveState();
   }
 
-  function createTab(url = defaultStartPage, savedState = null, targetBoardId = null){
+ function createTab(url = defaultStartPage, savedState = null, targetBoardId = null){
     const boardId = targetBoardId || currentBoardId;
     if (!boardId || !boards[boardId]) return;
 
@@ -2273,13 +2298,13 @@
     const header = document.createElement('div');
     header.classList.add('tab-header');
     header.innerHTML = `
-
-
-
       <div class="url-section">
         <input type="url" placeholder="Digite a URL..." />
       </div>
       <div class="controls">
+        <button title="Copy Elements" class="btn-copy-elements">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-icon lucide-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
         <button title="Edit as HTML" class="btn-edit-html">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-code-xml-icon lucide-code-xml"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
         </button>
@@ -2307,14 +2332,151 @@
         </button>
       </div>
     `;
+
     tabFrame.appendChild(header);
 
     const content = document.createElement('div');
     content.classList.add('tab-content');
+
     const webview = document.createElement('webview');
+
+    const btnCopyElements = header.querySelector('.btn-copy-elements');
+
+    // Event listener para o botão de cópia - CORRIGIDO
+    btnCopyElements.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isCopyModeActive = !isCopyModeActive;
+      btnCopyElements.classList.toggle('active');
+
+      try {
+        if (isCopyModeActive) {
+          // Ativando modo cópia
+          webview.executeJavaScript(`
+            try {
+              // Limpa qualquer listener anterior
+              if (window.copyModeHandler) {
+                document.body.removeEventListener('click', window.copyModeHandler, true);
+                delete window.copyModeHandler;
+              }
+
+              // Define o novo handler
+              function copyModeHandler(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                let textToCopy = '';
+                if (e.target.href) {
+                  textToCopy = e.target.href;
+                } else if (e.target.src) {
+                  textToCopy = e.target.src;
+                } else {
+                  const selection = window.getSelection();
+                  if (selection && selection.toString().trim() !== '') {
+                    textToCopy = selection.toString();
+                  } else {
+                    return; // Não copia se não há conteúdo selecionado
+                  }
+                }
+
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                  console.log('Copied to clipboard:', textToCopy);
+                  // Notifica o modo que uma cópia foi realizada
+                  window.postMessage({ type: 'copyCompleted' }, '*');
+                }).catch(err => {
+                  console.error('Failed to copy:', err);
+                });
+              }
+
+              // Armazena o handler globalmente e adiciona o listener
+              window.copyModeHandler = copyModeHandler;
+              document.body.addEventListener('click', copyModeHandler, true);
+
+              // Muda o cursor para indicar modo cópia
+              document.body.style.cursor = 'copy';
+              const interactiveElements = document.querySelectorAll('a, img, button, input, [contenteditable]');
+              interactiveElements.forEach(el => {
+                el.style.cursor = 'copy';
+              });
+
+            } catch(e) {
+              console.error('Error activating copy mode:', e);
+            }
+          `).catch(err => {
+            console.error('Failed to activate copy mode:', err);
+            isCopyModeActive = false;
+            btnCopyElements.classList.remove('active');
+          });
+
+          //alert('Modo de cópia ativado. Clique em qualquer elemento para copiar seu conteúdo.');
+
+        } else {
+          // Desativando modo cópia
+          webview.executeJavaScript(`
+            try {
+              // Remove o event listener do modo cópia
+              if (window.copyModeHandler) {
+                document.body.removeEventListener('click', window.copyModeHandler, true);
+                delete window.copyModeHandler;
+              }
+
+              // Restaura o cursor padrão
+              document.body.style.cursor = '';
+              const interactiveElements = document.querySelectorAll('a, img, button, input, [contenteditable]');
+              interactiveElements.forEach(el => {
+                el.style.cursor = '';
+              });
+
+            } catch(e) {
+              console.error('Error deactivating copy mode:', e);
+            }
+          `).catch(err => {
+            console.error('Failed to deactivate copy mode:', err);
+          });
+
+          //alert('Modo de cópia desativado!');
+        }
+
+      } catch (err) {
+        console.error('Error toggling copy mode:', err);
+        isCopyModeActive = false;
+        btnCopyElements.classList.remove('active');
+      }
+    });
+
+    // Listener para quando a cópia for completada
+    window.addEventListener('message', (e) => {
+      if (e.data.type === 'copyCompleted') {
+        isCopyModeActive = false;
+        btnCopyElements.classList.remove('active');
+
+        try {
+          webview.executeJavaScript(`
+            try {
+              if (window.copyModeHandler) {
+                document.body.removeEventListener('click', window.copyModeHandler, true);
+                delete window.copyModeHandler;
+              }
+              document.body.style.cursor = '';
+              const interactiveElements = document.querySelectorAll('a, img, button, input, [contenteditable]');
+              interactiveElements.forEach(el => {
+                el.style.cursor = '';
+              });
+            } catch(e) {
+              console.error('Error cleaning up copy mode after completion:', e);
+            }
+          `).catch(err => {
+            console.error('Failed to clean up copy mode after completion:', err);
+          });
+        } catch (err) {
+          console.error('Error cleaning up copy mode after completion:', err);
+        }
+      }
+    });
 
     webview.src = savedState ? savedState.url : url;
     webview.setAttribute('allowpopups', '');
+    webview.setAttribute('partition', 'persist:trusted');
+    webview.setAttribute('webpreferences', 'clipboard-read=yes, clipboard-write=yes');
     webview.style.background = 'white';
 
     const applyChromeUserAgentIfNeeded = (currentUrl) => {
@@ -2358,52 +2520,52 @@
     const pinBtn = header.querySelector('.btn-pin');
     const btnEditHtml = header.querySelector('.btn-edit-html');
 
-btnEditHtml.addEventListener('click', async (e) => {
-  e.stopPropagation();
+    btnEditHtml.addEventListener('click', async (e) => {
+      e.stopPropagation();
 
-  try {
-    // Obtém o HTML da página atual
-    const html = await webview.executeJavaScript(`
-      document.documentElement.outerHTML
-    `);
-
-    // Cria um novo campo de texto com o HTML
-    const textFieldId = createTextField({
-      content: html,
-      title: `HTML Export: ${webview.getTitle() || 'Untitled'}`,
-      position: {
-        top: '100px',
-        left: '100px',
-        zIndex: 200 + textFieldIdCounter
-      },
-      size: {
-        width: '800px',
-        height: '600px'
-      }
-    }, currentBoardId);
-
-    // Adiciona um listener para atualizar o webview quando o texto for alterado
-    const textField = boards[currentBoardId].textFields.find(t => t.id === textFieldId);
-    const textarea = textField.textarea;
-
-    textarea.addEventListener('input', () => {
       try {
-        // Atualiza o webview com o novo HTML
-        webview.executeJavaScript(`
-          document.open();
-          document.write(\`${textarea.value.replace(/`/g, '\\`')}\`);
-          document.close();
+        // Obtém o HTML da página atual
+        const html = await webview.executeJavaScript(`
+          document.documentElement.outerHTML
         `);
+
+        // Cria um novo campo de texto com o HTML
+        const textFieldId = createTextField({
+          content: html,
+          title: `HTML Export: ${webview.getTitle() || 'Untitled'}`,
+          position: {
+            top: '100px',
+            left: '100px',
+            zIndex: 200 + textFieldIdCounter
+          },
+          size: {
+            width: '800px',
+            height: '600px'
+          }
+        }, currentBoardId);
+
+        // Adiciona um listener para atualizar o webview quando o texto for alterado
+        const textField = boards[currentBoardId].textFields.find(t => t.id === textFieldId);
+        const textarea = textField.textarea;
+
+        textarea.addEventListener('input', () => {
+          try {
+            // Atualiza o webview com o novo HTML
+            webview.executeJavaScript(`
+              document.open();
+              document.write(\`${textarea.value.replace(/`/g, '\\`')}\`);
+              document.close();
+            `);
+          } catch (error) {
+            console.error('Error updating webview:', error);
+          }
+        });
+
       } catch (error) {
-        console.error('Error updating webview:', error);
+        console.error('Error exporting HTML:', error);
+        alert('Failed to export HTML. The page may have restrictions.');
       }
     });
-
-  } catch (error) {
-    console.error('Error exporting HTML:', error);
-    alert('Failed to export HTML. The page may have restrictions.');
-  }
-});
 
     function updatePinButton() {
       if (isFavorite(webview.src)) {
@@ -2473,11 +2635,46 @@ btnEditHtml.addEventListener('click', async (e) => {
 
     makeDraggable(tabFrame, header);
 
+    // Event listener principal do tabFrame - CORRIGIDO
     tabFrame.addEventListener('click', (e) => {
+      // Verifica se o clique foi no botão de cópia - se sim, não desativa
+      if (e.target.closest('.btn-copy-elements')) {
+        return;
+      }
+
+      // Se o modo cópia estiver ativo e o clique não foi no botão, desativa
+      if (isCopyModeActive) {
+        isCopyModeActive = false;
+        btnCopyElements.classList.remove('active');
+
+        try {
+          webview.executeJavaScript(`
+            try {
+              if (window.copyModeHandler) {
+                document.body.removeEventListener('click', window.copyModeHandler, true);
+                delete window.copyModeHandler;
+              }
+              document.body.style.cursor = '';
+              const interactiveElements = document.querySelectorAll('a, img, button, input, [contenteditable]');
+              interactiveElements.forEach(el => {
+                el.style.cursor = '';
+              });
+            } catch(e) {
+              console.error('Error disabling copy mode from tab click:', e);
+            }
+          `).catch(err => {
+            console.error('Failed to disable copy mode from tab click:', err);
+          });
+        } catch (err) {
+          console.error('Error disabling copy mode from tab click:', err);
+        }
+        return;
+      }
+
+      // Resto da lógica original do clique no tab...
       if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.classList.contains('resizer')) return;
 
       removeAllFocus();
-
       tabFrame.classList.add('focused');
       urlInput.style.display = 'block';
       urlInput.value = webview.src || url;
@@ -2515,7 +2712,6 @@ btnEditHtml.addEventListener('click', async (e) => {
         } else if (!newUrl.startsWith('http')) {
           newUrl = 'https://' + newUrl;
         }
-
 
         if (newUrl) {
           webview.src = newUrl;
@@ -2600,7 +2796,7 @@ btnEditHtml.addEventListener('click', async (e) => {
     updatePinButton();
 
     return id;
-  }
+}
 
   function createTextField(savedState = null, targetBoardId = null) {
   const boardId = targetBoardId || currentBoardId;

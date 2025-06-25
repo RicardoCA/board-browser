@@ -20,8 +20,8 @@ function createWindow() {
   Menu.setApplicationMenu(null);
 
   win.loadFile('index.html');
+  //win.webContents.openDevTools();
 }
-
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {

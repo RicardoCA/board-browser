@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script src="https://unpkg.com/lucide@latest"></script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Board Browser</title>
@@ -36,7 +37,7 @@
     background: #555;
     border: none;
     color: white;
-    padding: 8px 12px;
+    padding: 4px 6px;
     border-radius: 4px;
     font-weight: bold;
     font-size: 18px;
@@ -53,7 +54,7 @@
     background: #555;
     border: none;
     color: white;
-    padding: 8px 12px;
+    padding: 4px 6px;
     border-radius: 4px;
     font-weight: bold;
     font-size: 18px;
@@ -65,12 +66,14 @@
     background: #666;
   }
 
+
+
   #btnFavorites {
     cursor: pointer;
     background: #555;
     border: none;
     color: white;
-    padding: 8px 12px;
+    padding: 4px 6px;
     border-radius: 4px;
     font-weight: bold;
     font-size: 18px;
@@ -261,7 +264,7 @@
   .tab-header button, .textfield-header button, .list-header button {
     margin: 0;
     background: #666;
-    width: 24px;
+    width: 32px;
     height: 24px;
     border-radius: 4px;
     font-size: 16px;
@@ -768,6 +771,8 @@
     background-color: #444;
   }
 
+
+
   .favorite-icon {
     width: 16px;
     height: 16px;
@@ -824,7 +829,7 @@
     background: #555;
     border: none;
     color: white;
-    padding: 8px 12px;
+    padding: 4px 6px;
     border-radius: 4px;
     font-weight: bold;
     font-size: 18px;
@@ -845,7 +850,7 @@
     background: #555;
     border: none;
     color: white;
-    padding: 8px 12px;
+    padding: 4px 6px;
     border-radius: 4px;
     font-weight: bold;
     font-size: 18px;
@@ -866,7 +871,7 @@
     background: #555;
     border: none;
     color: white;
-    padding: 8px 12px;
+    padding: 4px 6px;
     border-radius: 4px;
     font-weight: bold;
     font-size: 18px;
@@ -887,7 +892,7 @@
     background: #555;
     border: none;
     color: white;
-    padding: 8px 12px;
+    padding: 4px 6px;
     border-radius: 4px;
     font-weight: bold;
     font-size: 18px;
@@ -974,12 +979,35 @@
   .move-mode .list-header {
     cursor: move !important;
   }
+
+  .btn-copy-elements {
+  margin: 0;
+  background: #666;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  font-size: 16px;
+  line-height: 0;
+  font-weight: normal;
+  cursor: pointer;
+  border: none;
+  color: white;
+}
+
+.btn-copy-elements:hover {
+  background: #777;
+}
+
+.btn-copy-elements.active {
+  background: #007acc;
+  color: white;
+}
 </style>
 </head>
 <body>
   <div id="toolbar">
-    <button id="btnFavorites">★</button>
-    <button id="btnMoreOptions">⋮</button>
+    <button id="btnFavorites"><i data-lucide="star"></i></button>
+    <button id="btnMoreOptions"><i data-lucide="grip"></i></button>
     <div id="more-options-menu">
       <button id="btnExportBoards">📤 Export Boards</button>
       <button id="btnImportBoards">📥 Import Boards</button>
@@ -988,7 +1016,7 @@
     </div>
 
     <div style="position: relative;">
-      <button id="btnNewTab">+</button>
+      <button id="btnNewTab"><i data-lucide="plus"></i></button>
       <div id="dropdown-menu">
         <button id="btnCreateTab">📄 New WebView</button>
         <button id="btnCreateTextField">📝 Text field</button>
@@ -999,10 +1027,10 @@
 
     <!-- Ferramentas de desenho e mover -->
     <div id="drawing-tools" style="position: relative;">
-      <button id="btnMoveMode" title="Move mode">✥</button>
-      <button id="btnBrush" title="Brush tool">🖌️</button>
-      <button id="btnEraser" title="Eraser tool">🧽</button>
-      <button id="btnClean" title="Clean tool">🧹</button>
+      <button id="btnMoveMode" title="Move mode"><i data-lucide="move"></i></button>
+      <button id="btnBrush" title="Brush tool"><i data-lucide="paintbrush"></i></button>
+      <button id="btnEraser" title="Eraser tool"><i data-lucide="eraser"></i></button>
+      <button id="btnClean" title="Clean tool"><i data-lucide="trash-2"></i></button>
       <div id="color-picker-menu">
         <div class="color-option selected" style="background-color: #ff0000;" data-color="#ff0000"></div>
         <div class="color-option" style="background-color: #00ff00;" data-color="#00ff00"></div>
@@ -1182,6 +1210,8 @@
   const startPageInput = document.getElementById('startPageInput');
   const searchEngineSelect = document.getElementById('searchEngineSelect');
   const btnSaveSettings = document.getElementById('btnSaveSettings');
+  var isCopyModeActive = false;
+
 
 
 
@@ -2236,7 +2266,7 @@
     saveState();
   }
 
-  function createTab(url = defaultStartPage, savedState = null, targetBoardId = null){
+ function createTab(url = defaultStartPage, savedState = null, targetBoardId = null){
     const boardId = targetBoardId || currentBoardId;
     if (!boardId || !boards[boardId]) return;
 
@@ -2272,27 +2302,181 @@
         <input type="url" placeholder="Digite a URL..." />
       </div>
       <div class="controls">
-        <button title="Edit as HTML" class="btn-edit-html">✎</button>
-        <button title="Back" class="btn-back">←</button>
-        <button title="Forward" class="btn-forward">→</button>
-        <button title="Refresh" class="btn-refresh">↻</button>
-        <button title="Pin/Unpin" class="btn-pin">⌖</button>
+        <button title="Copy Elements" class="btn-copy-elements">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-icon lucide-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+        <button title="Edit as HTML" class="btn-edit-html">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-code-xml-icon lucide-code-xml"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+        </button>
+        <button title="Back" class="btn-back">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-reply-icon lucide-reply"><path d="M20 18v-2a4 4 0 0 0-4-4H4"/><path d="m9 17-5-5 5-5"/></svg>
+        </button>
+        <button title="Forward" class="btn-forward">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-forward-icon lucide-forward"><path d="m15 17 5-5-5-5"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg>
+        </button>
+        <button title="Refresh" class="btn-refresh">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw-icon lucide-rotate-ccw"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+        <button title="Pin/Unpin" class="btn-pin">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-star-icon lucide-star"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>
+        </button>
         <div class="move-to-board-container">
-          <button class="btn-move-to-board" title="Move to another board">⇄</button>
+          <button class="btn-move-to-board" title="Move to another board">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move3d-icon lucide-move-3d"><path d="M5 3v16h16"/><path d="m5 19 6-6"/><path d="m2 6 3-3 3 3"/><path d="m18 16 3 3-3 3"/></svg>
+          </button>
           <div class="move-to-board-menu"></div>
         </div>
-        <button title="Change size" class="btn-maximize">□</button>
-        <button title="Close" class="btn-close">×</button>
+        <button title="Change size" class="btn-maximize"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-maximize2-icon lucide-maximize-2"><path d="M15 3h6v6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/><path d="M9 21H3v-6"/></svg>
+        </button>
+        <button title="Close" class="btn-close"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-icon lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
       </div>
     `;
+
     tabFrame.appendChild(header);
 
     const content = document.createElement('div');
     content.classList.add('tab-content');
+
     const webview = document.createElement('webview');
+
+    const btnCopyElements = header.querySelector('.btn-copy-elements');
+
+    // Event listener para o botão de cópia - CORRIGIDO
+    btnCopyElements.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isCopyModeActive = !isCopyModeActive;
+      btnCopyElements.classList.toggle('active');
+
+      try {
+        if (isCopyModeActive) {
+          // Ativando modo cópia
+          webview.executeJavaScript(`
+            try {
+              // Limpa qualquer listener anterior
+              if (window.copyModeHandler) {
+                document.body.removeEventListener('click', window.copyModeHandler, true);
+                delete window.copyModeHandler;
+              }
+
+              // Define o novo handler
+              function copyModeHandler(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                let textToCopy = '';
+                if (e.target.href) {
+                  textToCopy = e.target.href;
+                } else if (e.target.src) {
+                  textToCopy = e.target.src;
+                } else {
+                  const selection = window.getSelection();
+                  if (selection && selection.toString().trim() !== '') {
+                    textToCopy = selection.toString();
+                  } else {
+                    return; // Não copia se não há conteúdo selecionado
+                  }
+                }
+
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                  console.log('Copied to clipboard:', textToCopy);
+                  // Notifica o modo que uma cópia foi realizada
+                  window.postMessage({ type: 'copyCompleted' }, '*');
+                }).catch(err => {
+                  console.error('Failed to copy:', err);
+                });
+              }
+
+              // Armazena o handler globalmente e adiciona o listener
+              window.copyModeHandler = copyModeHandler;
+              document.body.addEventListener('click', copyModeHandler, true);
+
+              // Muda o cursor para indicar modo cópia
+              document.body.style.cursor = 'copy';
+              const interactiveElements = document.querySelectorAll('a, img, button, input, [contenteditable]');
+              interactiveElements.forEach(el => {
+                el.style.cursor = 'copy';
+              });
+
+            } catch(e) {
+              console.error('Error activating copy mode:', e);
+            }
+          `).catch(err => {
+            console.error('Failed to activate copy mode:', err);
+            isCopyModeActive = false;
+            btnCopyElements.classList.remove('active');
+          });
+
+          //alert('Modo de cópia ativado. Clique em qualquer elemento para copiar seu conteúdo.');
+
+        } else {
+          // Desativando modo cópia
+          webview.executeJavaScript(`
+            try {
+              // Remove o event listener do modo cópia
+              if (window.copyModeHandler) {
+                document.body.removeEventListener('click', window.copyModeHandler, true);
+                delete window.copyModeHandler;
+              }
+
+              // Restaura o cursor padrão
+              document.body.style.cursor = '';
+              const interactiveElements = document.querySelectorAll('a, img, button, input, [contenteditable]');
+              interactiveElements.forEach(el => {
+                el.style.cursor = '';
+              });
+
+            } catch(e) {
+              console.error('Error deactivating copy mode:', e);
+            }
+          `).catch(err => {
+            console.error('Failed to deactivate copy mode:', err);
+          });
+
+          //alert('Modo de cópia desativado!');
+        }
+
+      } catch (err) {
+        console.error('Error toggling copy mode:', err);
+        isCopyModeActive = false;
+        btnCopyElements.classList.remove('active');
+      }
+    });
+
+    // Listener para quando a cópia for completada
+    window.addEventListener('message', (e) => {
+      if (e.data.type === 'copyCompleted') {
+        isCopyModeActive = false;
+        btnCopyElements.classList.remove('active');
+
+        try {
+          webview.executeJavaScript(`
+            try {
+              if (window.copyModeHandler) {
+                document.body.removeEventListener('click', window.copyModeHandler, true);
+                delete window.copyModeHandler;
+              }
+              document.body.style.cursor = '';
+              const interactiveElements = document.querySelectorAll('a, img, button, input, [contenteditable]');
+              interactiveElements.forEach(el => {
+                el.style.cursor = '';
+              });
+            } catch(e) {
+              console.error('Error cleaning up copy mode after completion:', e);
+            }
+          `).catch(err => {
+            console.error('Failed to clean up copy mode after completion:', err);
+          });
+        } catch (err) {
+          console.error('Error cleaning up copy mode after completion:', err);
+        }
+      }
+    });
 
     webview.src = savedState ? savedState.url : url;
     webview.setAttribute('allowpopups', '');
+    webview.setAttribute('partition', 'persist:trusted');
+    webview.setAttribute('webpreferences', 'clipboard-read=yes, clipboard-write=yes');
     webview.style.background = 'white';
 
     const applyChromeUserAgentIfNeeded = (currentUrl) => {
@@ -2336,52 +2520,52 @@
     const pinBtn = header.querySelector('.btn-pin');
     const btnEditHtml = header.querySelector('.btn-edit-html');
 
-btnEditHtml.addEventListener('click', async (e) => {
-  e.stopPropagation();
+    btnEditHtml.addEventListener('click', async (e) => {
+      e.stopPropagation();
 
-  try {
-    // Obtém o HTML da página atual
-    const html = await webview.executeJavaScript(`
-      document.documentElement.outerHTML
-    `);
-
-    // Cria um novo campo de texto com o HTML
-    const textFieldId = createTextField({
-      content: html,
-      title: `HTML Export: ${webview.getTitle() || 'Untitled'}`,
-      position: {
-        top: '100px',
-        left: '100px',
-        zIndex: 200 + textFieldIdCounter
-      },
-      size: {
-        width: '800px',
-        height: '600px'
-      }
-    }, currentBoardId);
-
-    // Adiciona um listener para atualizar o webview quando o texto for alterado
-    const textField = boards[currentBoardId].textFields.find(t => t.id === textFieldId);
-    const textarea = textField.textarea;
-
-    textarea.addEventListener('input', () => {
       try {
-        // Atualiza o webview com o novo HTML
-        webview.executeJavaScript(`
-          document.open();
-          document.write(\`${textarea.value.replace(/`/g, '\\`')}\`);
-          document.close();
+        // Obtém o HTML da página atual
+        const html = await webview.executeJavaScript(`
+          document.documentElement.outerHTML
         `);
+
+        // Cria um novo campo de texto com o HTML
+        const textFieldId = createTextField({
+          content: html,
+          title: `HTML Export: ${webview.getTitle() || 'Untitled'}`,
+          position: {
+            top: '100px',
+            left: '100px',
+            zIndex: 200 + textFieldIdCounter
+          },
+          size: {
+            width: '800px',
+            height: '600px'
+          }
+        }, currentBoardId);
+
+        // Adiciona um listener para atualizar o webview quando o texto for alterado
+        const textField = boards[currentBoardId].textFields.find(t => t.id === textFieldId);
+        const textarea = textField.textarea;
+
+        textarea.addEventListener('input', () => {
+          try {
+            // Atualiza o webview com o novo HTML
+            webview.executeJavaScript(`
+              document.open();
+              document.write(\`${textarea.value.replace(/`/g, '\\`')}\`);
+              document.close();
+            `);
+          } catch (error) {
+            console.error('Error updating webview:', error);
+          }
+        });
+
       } catch (error) {
-        console.error('Error updating webview:', error);
+        console.error('Error exporting HTML:', error);
+        alert('Failed to export HTML. The page may have restrictions.');
       }
     });
-
-  } catch (error) {
-    console.error('Error exporting HTML:', error);
-    alert('Failed to export HTML. The page may have restrictions.');
-  }
-});
 
     function updatePinButton() {
       if (isFavorite(webview.src)) {
@@ -2451,11 +2635,46 @@ btnEditHtml.addEventListener('click', async (e) => {
 
     makeDraggable(tabFrame, header);
 
+    // Event listener principal do tabFrame - CORRIGIDO
     tabFrame.addEventListener('click', (e) => {
+      // Verifica se o clique foi no botão de cópia - se sim, não desativa
+      if (e.target.closest('.btn-copy-elements')) {
+        return;
+      }
+
+      // Se o modo cópia estiver ativo e o clique não foi no botão, desativa
+      if (isCopyModeActive) {
+        isCopyModeActive = false;
+        btnCopyElements.classList.remove('active');
+
+        try {
+          webview.executeJavaScript(`
+            try {
+              if (window.copyModeHandler) {
+                document.body.removeEventListener('click', window.copyModeHandler, true);
+                delete window.copyModeHandler;
+              }
+              document.body.style.cursor = '';
+              const interactiveElements = document.querySelectorAll('a, img, button, input, [contenteditable]');
+              interactiveElements.forEach(el => {
+                el.style.cursor = '';
+              });
+            } catch(e) {
+              console.error('Error disabling copy mode from tab click:', e);
+            }
+          `).catch(err => {
+            console.error('Failed to disable copy mode from tab click:', err);
+          });
+        } catch (err) {
+          console.error('Error disabling copy mode from tab click:', err);
+        }
+        return;
+      }
+
+      // Resto da lógica original do clique no tab...
       if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.classList.contains('resizer')) return;
 
       removeAllFocus();
-
       tabFrame.classList.add('focused');
       urlInput.style.display = 'block';
       urlInput.value = webview.src || url;
@@ -2493,7 +2712,6 @@ btnEditHtml.addEventListener('click', async (e) => {
         } else if (!newUrl.startsWith('http')) {
           newUrl = 'https://' + newUrl;
         }
-
 
         if (newUrl) {
           webview.src = newUrl;
@@ -2578,7 +2796,7 @@ btnEditHtml.addEventListener('click', async (e) => {
     updatePinButton();
 
     return id;
-  }
+}
 
   function createTextField(savedState = null, targetBoardId = null) {
   const boardId = targetBoardId || currentBoardId;
@@ -2633,11 +2851,17 @@ btnEditHtml.addEventListener('click', async (e) => {
     }'>
     <div class="controls">
       <div class="move-to-board-container">
-        <button class="btn-move-to-board" title="Move to another board">⇄</button>
+        <button class="btn-move-to-board" title="Move to another board">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move3d-icon lucide-move-3d"><path d="M5 3v16h16"/><path d="m5 19 6-6"/><path d="m2 6 3-3 3 3"/><path d="m18 16 3 3-3 3"/></svg>
+        </button>
         <div class="move-to-board-menu"></div>
       </div>
-      <button title="Change Size" class="btn-maximize">□</button>
-      <button title="Close" class="btn-close">×</button>
+      <button title="Change Size" class="btn-maximize">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-maximize2-icon lucide-maximize-2"><path d="M15 3h6v6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/><path d="M9 21H3v-6"/></svg>
+      </button>
+      <button title="Close" class="btn-close">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-icon lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
     </div>
   `;
   tabFrame.appendChild(header);
@@ -2793,11 +3017,15 @@ btnEditHtml.addEventListener('click', async (e) => {
       <input type='text' class="title-section" value='${savedState?.title || `Lista #${id}`}'>
       <div class="controls">
         <div class="move-to-board-container">
-          <button class="btn-move-to-board" title="Move to another board">⇄</button>
+          <button class="btn-move-to-board" title="Move to another board">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move3d-icon lucide-move-3d"><path d="M5 3v16h16"/><path d="m5 19 6-6"/><path d="m2 6 3-3 3 3"/><path d="m18 16 3 3-3 3"/></svg>
+          </button>
           <div class="move-to-board-menu"></div>
         </div>
-        <button title="Change size" class="btn-maximize">□</button>
-        <button title="Close" class="btn-close">×</button>
+        <button title="Change size" class="btn-maximize"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-maximize2-icon lucide-maximize-2"><path d="M15 3h6v6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/><path d="M9 21H3v-6"/></svg></button>
+        <button title="Close" class="btn-close">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-icon lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
       </div>
     `;
     listFrame.appendChild(header);
@@ -3387,6 +3615,9 @@ btnEditHtml.addEventListener('click', async (e) => {
       }
     }
   });
+</script>
+<script>
+  lucide.createIcons();
 </script>
 </body>
 </html>
