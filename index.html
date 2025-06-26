@@ -1260,10 +1260,7 @@
 
   btnClean.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (isDraggingDesktop || isMoveModeActive || isDrawing || isErasing) {
-        alert('You cannot be in move/paint/erasing mode to clear the board.');
-        return;
-    }
+
 
     // Confirmação antes de limpar
     if (confirm('Are you sure you want to clear the board?')) {
