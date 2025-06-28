@@ -218,6 +218,10 @@
     cursor: grab;
   }
 
+  .url-section {
+    position: relative; /* Necessário para posicionar a caixa de sugestões */
+  }
+
   .tab-header .url-section {
     flex: 1;
     display: flex;
@@ -226,6 +230,39 @@
     min-width: 0;
     max-width: 80%;
   }
+
+  .suggestions-box {
+  display: none; /* Escondido por padrão */
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #444;
+  border: 1px solid #555;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 10001; /* Deve ficar acima de outros elementos */
+}
+
+.suggestion-item {
+  padding: 8px 12px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suggestion-item:hover {
+  background: #555;
+}
+
+.suggestion-item.active {
+  background: #007acc;
+}
 
   .textfield-header .title-section, .list-header .title-section {
     flex: 1;
@@ -1107,6 +1144,13 @@
           <option value="chatgpt">ChatGPT</option>
         </select>
       </div>
+
+      <div class="form-group">
+        <button class="modal-button modal-button-secondary" id="btnClearHistory">Clear Browsing History</button>
+      </div>
+
+
+
     </div>
     <div class="modal-footer">
       <button class="modal-button modal-button-secondary close-modal">Cancel</button>
@@ -1210,6 +1254,7 @@
   const startPageInput = document.getElementById('startPageInput');
   const searchEngineSelect = document.getElementById('searchEngineSelect');
   const btnSaveSettings = document.getElementById('btnSaveSettings');
+  const btnClearHistory = document.getElementById('btnClearHistory');
   var isCopyModeActive = false;
 
 
@@ -1240,6 +1285,23 @@
   let currentBrushSize = 5;
   let isErasing = false;
   let drawingData = JSON.parse(localStorage.getItem('drawingData')) || {};
+  let browsingHistory = JSON.parse(localStorage.getItem('browsingHistory')) || [];
+
+  btnClearHistory.addEventListener('click', () => {
+    if (confirm("Are you sure you want to clear the browsing history?")) {
+      browsingHistory = [];
+      localStorage.setItem('browsingHistory', JSON.stringify(browsingHistory));
+      alert("Browsing history cleared.");
+    }
+  });
+
+  function addToHistory(url) {
+    if (!browsingHistory.includes(url)) {
+      browsingHistory.push(url);
+      localStorage.setItem('browsingHistory', JSON.stringify(browsingHistory));
+    }
+  }
+
 
   btnSettings.addEventListener('click', () => {
     startPageInput.value = defaultStartPage;
@@ -2296,7 +2358,8 @@
     header.classList.add('tab-header');
     header.innerHTML = `
       <div class="url-section">
-        <input type="url" placeholder="Digite a URL..." />
+        <input type="url" placeholder="Input the URL or Search..." />
+        <div class="suggestions-box"></div>
       </div>
       <div class="controls">
         <button title="Copy Elements" class="btn-copy-elements">
@@ -2490,6 +2553,7 @@
     // Monitora alterações de URL (navegação dentro do webview)
     webview.addEventListener('did-navigate', (e) => {
         applyChromeUserAgentIfNeeded(e.url);
+        addToHistory(e.url);
     });
 
     // Monitora redirecionamentos (como após login)
@@ -2507,6 +2571,68 @@
     desktop.appendChild(tabFrame);
 
     const urlInput = header.querySelector('input[type="url"]');
+
+    const suggestionsBox = header.querySelector('.suggestions-box');
+
+    urlInput.addEventListener('input', (e) => {
+        const inputText = e.target.value.toLowerCase().trim();
+        suggestionsBox.innerHTML = '';
+
+        if (inputText.length === 0) {
+            suggestionsBox.style.display = 'none';
+            return;
+        }
+
+        // Combina histórico e favoritos em uma única lista, sem duplicatas
+        const favoriteUrls = favorites.map(fav => fav.url);
+        const allSources = [...new Set([...browsingHistory, ...favoriteUrls])];
+
+        const filtered = allSources.filter(item => item.toLowerCase().includes(inputText));
+
+        // Limita a 10 sugestões para não poluir a tela
+        const topResults = filtered.slice(0, 10);
+
+        if (topResults.length > 0) {
+            topResults.forEach(suggestionUrl => {
+                const item = document.createElement('div');
+                item.classList.add('suggestion-item');
+                item.textContent = suggestionUrl;
+                item.title = suggestionUrl; // Mostra URL completa no hover
+
+                // Evento de clique em uma sugestão
+                item.addEventListener('mousedown', (event) => {
+                    event.preventDefault(); // Previne que o input perca o foco antes do clique
+                    urlInput.value = suggestionUrl;
+                    webview.src = suggestionUrl;
+                    suggestionsBox.style.display = 'none';
+                    saveState();
+                });
+
+                suggestionsBox.appendChild(item);
+            });
+            suggestionsBox.style.display = 'block';
+        } else {
+            suggestionsBox.style.display = 'none';
+        }
+    });
+
+    // Esconde a caixa de sugestões quando o input perde o foco
+    urlInput.addEventListener('blur', () => {
+        // Usamos um pequeno timeout para permitir que o clique no item de sugestão seja registrado
+        setTimeout(() => {
+            suggestionsBox.style.display = 'none';
+        }, 150);
+    });
+
+    // Mostra a caixa de sugestões quando o input ganha foco e já tem texto
+     urlInput.addEventListener('focus', () => {
+        if (urlInput.value.trim().length > 0) {
+            // Dispara o evento 'input' para re-filtrar e mostrar as sugestões
+            urlInput.dispatchEvent(new Event('input'));
+        }
+    });
+    // **FIM DA LÓGICA DE SUGESTÕES**
+
     const btnMaximize = header.querySelector('.btn-maximize');
     const btnClose = header.querySelector('.btn-close');
     const btnMoveToBoard = header.querySelector('.btn-move-to-board');
