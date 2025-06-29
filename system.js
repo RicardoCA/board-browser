@@ -1016,6 +1016,7 @@ function renderBoardTab(boardId, boardName) {
     boardTab.dataset.boardId = boardId;
     boardTab.title = boardName;
     boardTab.textContent = boardName;
+    boardTab.draggable = true;
 
     if (currentBoardId === boardId) {
         boardTab.classList.add('active');
@@ -2531,4 +2532,87 @@ document.addEventListener('keydown', (e) => {
             }
         }
     }
+    else if(e.ctrlKey && e.key === 'b'){
+        e.preventDefault();
+        createBoard(`Board ${boardIdCounter + 1}`);
+    }
+    else if(e.ctrlKey && e.key === 'w'){
+        e.preventDefault();
+        createTab();
+    }
+    else if(e.ctrlKey && e.key === 't'){
+        e.preventDefault();
+        createTextField();
+    }
+    else if(e.ctrlKey && e.key === 'l'){
+        e.preventDefault();
+        createList();
+    }
+    else if(e.ctrlKey && e.key === 'r'){
+        e.preventDefault();
+        showRenameModal();
+    }
 });
+
+boardsContainer.addEventListener('dragstart', (e) => {
+    if (e.target.classList.contains('board-tab')) {
+        e.target.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', e.target.dataset.boardId);
+        e.dataTransfer.effectAllowed = 'move';
+    }
+});
+
+boardsContainer.addEventListener('dragover', (e) => {
+    if (e.target.classList.contains('board-tab')) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+
+        const draggingElement = document.querySelector('.board-tab.dragging');
+        const targetElement = e.target;
+
+        if (draggingElement !== targetElement) {
+            const rect = targetElement.getBoundingClientRect();
+            const nextElement = (e.clientY > rect.top + rect.height / 2) ?
+            targetElement.nextElementSibling :
+            targetElement;
+
+            boardsContainer.insertBefore(draggingElement, nextElement);
+        }
+    }
+});
+
+boardsContainer.addEventListener('dragend', (e) => {
+    if (e.target.classList.contains('board-tab')) {
+        e.target.classList.remove('dragging');
+    }
+});
+
+boardsContainer.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const boardId = e.dataTransfer.getData('text/plain');
+    const boardTab = document.querySelector(`.board-tab[data-board-id="${boardId}"]`);
+
+    if (boardTab && !e.target.classList.contains('board-tab')) {
+        // Se soltar em uma área não válida, não faz nada
+        return;
+    }
+
+    // Atualiza a ordem no localStorage (opcional, se quiser persistência)
+    updateBoardsOrder();
+});
+
+function updateBoardsOrder() {
+    const boardTabs = Array.from(boardsContainer.querySelectorAll('.board-tab'));
+    const newOrder = boardTabs.map(tab => tab.dataset.boardId);
+
+    // Reorganiza o objeto `boards` para refletir a nova ordem
+    const reorderedBoards = {};
+    newOrder.forEach(id => {
+        if (boards[id]) {
+            reorderedBoards[id] = boards[id];
+        }
+    });
+
+    boards = reorderedBoards;
+    saveState(); // Salva a nova ordem
+}
