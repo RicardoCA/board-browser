@@ -22,6 +22,32 @@ body::-webkit-scrollbar,
     display: none;                /* Chrome, Safari e Electron */
 }
 
+#context-menu {
+    position: absolute;
+    display: none;
+    background: #444;
+    border: 1px solid #555;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    z-index: 10000;
+    min-width: 160px;
+  }
+
+  #context-menu button {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  #context-menu button:hover {
+    background: #555;
+  }
+
 #toolbar {
 height: 40px;
 background: #333;
@@ -1165,6 +1191,12 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     </div>
   </div>
 
+  <div id="context-menu">
+    <button id="ctx-create-tab">📄 New WebView</button>
+    <button id="ctx-create-textfield">📝 Text field</button>
+    <button id="ctx-create-list">📋 List</button>
+  </div>
+
   <!-- Modal para histórico -->
 <div class="modal-overlay" id="historyModal">
     <div class="modal-content">
@@ -1325,6 +1357,11 @@ const historyList = document.getElementById('historyList');
 const btnClearHistoryModal = document.getElementById('btnClearHistoryModal');
 const historySearch = document.getElementById('historySearch');
 
+const contextMenu = document.getElementById('context-menu');
+const ctxCreateTab = document.getElementById('ctx-create-tab');
+const ctxCreateTextField = document.getElementById('ctx-create-textfield');
+const ctxCreateList = document.getElementById('ctx-create-list');
+
 var isCopyModeActive = false;
 
 
@@ -1334,7 +1371,7 @@ var isCopyModeActive = false;
 let defaultStartPage = localStorage.getItem('startPage') || 'https://www.google.com';
 let defaultSearchEngine = localStorage.getItem('searchEngine') || 'google';
 
-
+let lastRightClickPosition = null;
 let boards = {};
 let currentBoardId = null;
 let tabIdCounter = 0;
@@ -1388,6 +1425,54 @@ function filterHistory(searchTerm) {
         }
     });
 }
+
+desktop.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+
+    // Esconde outros menus abertos
+    dropdownMenu.style.display = 'none';
+    moreOptionsMenu.style.display = 'none';
+    colorPickerMenu.style.display = 'none';
+
+    // Posiciona o menu de contexto
+    contextMenu.style.display = 'block';
+    contextMenu.style.left = `${e.clientX}px`;
+    contextMenu.style.top = `${e.clientY}px`;
+
+    // Armazena a posição do clique para criar elementos depois
+    lastRightClickPosition = {
+        x: e.clientX - desktop.getBoundingClientRect().left,
+        y: e.clientY - desktop.getBoundingClientRect().top
+    };
+});
+
+// Fecha o menu ao clicar em qualquer lugar
+document.addEventListener('click', () => {
+    contextMenu.style.display = 'none';
+});
+
+// Fecha o menu ao pressionar ESC
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        contextMenu.style.display = 'none';
+    }
+});
+
+// Eventos dos itens do menu
+ctxCreateTab.addEventListener('click', () => {
+    createTab();
+    contextMenu.style.display = 'none';
+});
+
+ctxCreateTextField.addEventListener('click', () => {
+    createTextField();
+    contextMenu.style.display = 'none';
+});
+
+ctxCreateList.addEventListener('click', () => {
+    createList();
+    contextMenu.style.display = 'none';
+});
 
 btnHistory.addEventListener('click', () => {
     showHistoryModal();
@@ -1748,6 +1833,12 @@ btnMoreOptions.addEventListener('click', (e) => {
 document.addEventListener('click', (e) => {
     if (!btnMoreOptions.contains(e.target) && !moreOptionsMenu.contains(e.target)) {
         moreOptionsMenu.style.display = 'none';
+    }
+});
+
+document.addEventListener('click', (e) => {
+    if (!contextMenu.contains(e.target)) {
+        contextMenu.style.display = 'none';
     }
 });
 
