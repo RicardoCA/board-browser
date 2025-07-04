@@ -746,6 +746,30 @@ align-items: center;
 justify-content: center;
 }
 
+.history-list {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.history-item {
+    padding: 10px;
+    margin-bottom: 5px;
+    background: #444;
+    border-radius: 4px;
+    cursor: pointer;
+    word-break: break-all;
+}
+
+.history-item:hover {
+    background: #555;
+}
+
+.no-history {
+    color: #aaa;
+    text-align: center;
+    padding: 20px;
+}
+
 #zoom-controls button:hover {
 background: #666;
 }
@@ -788,6 +812,21 @@ width: 90%;
     cursor: pointer;
     border: none;
     color: white;
+}
+
+#historySearch {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    background: #333;
+    border: 1px solid #555;
+    color: white;
+    border-radius: 4px;
+}
+
+#historySearch:focus {
+    outline: none;
+    border-color: #007acc;
 }
 
 .btn-edit-html:hover {
@@ -1050,6 +1089,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     <div id="more-options-menu">
       <button id="btnExportBoards">📤 Export Boards</button>
       <button id="btnImportBoards">📥 Import Boards</button>
+      <button id="btnHistory">🕒 History</button>
       <button id="btnRenameBoards">✏️ Rename Boards</button>
       <button id="btnSettings">⚙️ Settings</button>
     </div>
@@ -1124,6 +1164,27 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
       </div>
     </div>
   </div>
+
+  <!-- Modal para histórico -->
+<div class="modal-overlay" id="historyModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Browsing History</h3>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <input type="text" id="historySearch" class="form-control" placeholder="Search history...">
+            </div>
+            <div class="history-list" id="historyList">
+                <!-- Os itens de histórico serão adicionados aqui dinamicamente -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-button modal-button-secondary" id="btnClearHistoryModal">Clear History</button>
+        </div>
+    </div>
+</div>
 
   <!-- Modal para configurações -->
   <div class="modal-overlay" id="settingsModal">
@@ -1257,6 +1318,13 @@ const startPageInput = document.getElementById('startPageInput');
 const searchEngineSelect = document.getElementById('searchEngineSelect');
 const btnSaveSettings = document.getElementById('btnSaveSettings');
 const btnClearHistory = document.getElementById('btnClearHistory');
+
+const btnHistory = document.getElementById('btnHistory');
+const historyModal = document.getElementById('historyModal');
+const historyList = document.getElementById('historyList');
+const btnClearHistoryModal = document.getElementById('btnClearHistoryModal');
+const historySearch = document.getElementById('historySearch');
+
 var isCopyModeActive = false;
 
 
@@ -1299,10 +1367,79 @@ btnClearHistory.addEventListener('click', () => {
 
 function addToHistory(url) {
     if (!browsingHistory.includes(url)) {
-        browsingHistory.push(url);
+        browsingHistory.unshift(url);
         localStorage.setItem('browsingHistory', JSON.stringify(browsingHistory));
     }
 }
+
+historySearch.addEventListener('input', (e) => {
+    filterHistory(e.target.value.toLowerCase());
+});
+
+function filterHistory(searchTerm) {
+    const historyItems = document.querySelectorAll('.history-item');
+
+    historyItems.forEach(item => {
+        const url = item.textContent.toLowerCase();
+        if (url.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+btnHistory.addEventListener('click', () => {
+    showHistoryModal();
+    moreOptionsMenu.style.display = 'none';
+});
+
+function showHistoryModal() {
+    updateHistoryList();
+    historyModal.style.display = 'flex';
+    historySearch.focus();
+}
+
+function updateHistoryList() {
+    historyList.innerHTML = '';
+
+    if (browsingHistory.length === 0) {
+        const noHistory = document.createElement('div');
+        noHistory.classList.add('no-history');
+        noHistory.textContent = 'No browsing history yet.';
+        historyList.appendChild(noHistory);
+        return;
+    }
+
+    // Mostra os itens mais recentes primeiro
+
+
+    browsingHistory.forEach(url => {
+        const item = document.createElement('div');
+        item.classList.add('history-item');
+        item.textContent = url;
+
+        item.addEventListener('click', () => {
+            createTab(url);
+            historyModal.style.display = 'none';
+        });
+
+        historyList.appendChild(item);
+    });
+
+    // Limpa o campo de pesquisa quando a lista é atualizada
+    historySearch.value = '';
+}
+
+btnClearHistoryModal.addEventListener('click', () => {
+    if (confirm("Are you sure you want to clear all browsing history?")) {
+        browsingHistory = [];
+        localStorage.setItem('browsingHistory', JSON.stringify(browsingHistory));
+        updateHistoryList();
+    }
+});
+
+
 
 
 btnSettings.addEventListener('click', () => {
@@ -3759,6 +3896,11 @@ document.addEventListener('keydown', (e) => {
     else if(e.ctrlKey && e.key === 'r'){
         e.preventDefault();
         showRenameModal();
+    }
+    else if(e.ctrlKey && e.key === 'h'){
+        e.preventDefault();
+        showHistoryModal();
+        moreOptionsMenu.style.display = 'none';
     }
 });
 
