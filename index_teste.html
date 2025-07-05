@@ -450,7 +450,7 @@ webview, iframe {
 
 .dragging {
     border-color: var(--theme-color) !important;
-    box-shadow: 0 0 20px rgba(0,122,204,0.5) !important;
+    box-shadow: 0 0 20px var(--theme-color) !important;
     z-index: 10000 !important;
 }
 
@@ -1160,7 +1160,10 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     border-color: var(--theme-color) !important;
 }
 
-.board-tab.active{
+.board-tab.active,
+#btnMoveMode.active,
+#btnBrush.active,
+#btnEraser.active{
     background-color: var(--theme-color) !important;
     border-color: var(--theme-color) !important;
 }
