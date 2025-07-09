@@ -19,13 +19,18 @@ function createWindow() {
   Menu.setApplicationMenu(null);
 
   // Controle para evitar múltiplos alerts
-  const activeDownloads = new Set();
+  const activeDownloads = new Map(); // Mudança para Map para armazenar mais informações
   const recentlyCompleted = new Set();
   const completedDownloads = []; // Array para armazenar downloads concluídos
 
   // Handler para enviar lista de downloads para o renderer
   ipcMain.handle('get-completed-downloads', () => {
     return completedDownloads;
+  });
+
+  // Handler para enviar downloads ativos
+  ipcMain.handle('get-active-downloads', () => {
+    return Array.from(activeDownloads.values());
   });
 
   // Handler para limpar lista de downloads
@@ -40,12 +45,55 @@ function createWindow() {
       const fileName = item.getFilename();
       const downloadId = `${fileName}_${Date.now()}`;
       
-      // Adiciona o download ao conjunto de downloads ativos
-      activeDownloads.add(downloadId);
+      // Cria objeto de download ativo
+      const downloadInfo = {
+        id: downloadId,
+        fileName: fileName,
+        totalBytes: item.getTotalBytes(),
+        receivedBytes: 0,
+        progress: 0,
+        startTime: new Date(),
+        state: 'progressing'
+      };
+      
+      // Adiciona o download ao Map de downloads ativos
+      activeDownloads.set(downloadId, downloadInfo);
+      
+      // Notifica o renderer sobre o novo download
+      win.webContents.send('download-started', downloadInfo);
+      
+      // Listener para atualização de progresso
+      item.on('updated', (event, state) => {
+        if (state === 'progressing') {
+          const receivedBytes = item.getReceivedBytes();
+          const totalBytes = item.getTotalBytes();
+          const progress = totalBytes > 0 ? (receivedBytes / totalBytes) * 100 : 0;
+          
+          // Atualiza informações do download
+          downloadInfo.receivedBytes = receivedBytes;
+          downloadInfo.progress = progress;
+          downloadInfo.state = state;
+          
+          // Atualiza no Map
+          activeDownloads.set(downloadId, downloadInfo);
+          
+          // Notifica o renderer sobre o progresso
+          win.webContents.send('download-progress', {
+            id: downloadId,
+            receivedBytes,
+            totalBytes,
+            progress,
+            fileName
+          });
+        }
+      });
       
       item.on('done', (event, state) => {
-        // Remove do conjunto de downloads ativos
+        // Remove do Map de downloads ativos
         activeDownloads.delete(downloadId);
+        
+        // Notifica que o download ativo foi removido
+        win.webContents.send('download-removed', downloadId);
         
         // Verifica se já não foi mostrado recentemente
         const completedId = `${fileName}_${state}`;
@@ -63,35 +111,25 @@ function createWindow() {
         
         if (state === 'completed') {
           // Adiciona o download à lista de concluídos
-          const downloadInfo = {
+          const completedDownloadInfo = {
             fileName: fileName,
             completedAt: new Date().toLocaleString('pt-BR'),
             path: item.getSavePath(),
             size: item.getTotalBytes()
           };
-          completedDownloads.unshift(downloadInfo); // Adiciona no início da lista
+          completedDownloads.unshift(completedDownloadInfo); // Adiciona no início da lista
           
           // Limita a lista a 50 downloads para não usar muita memória
           if (completedDownloads.length > 50) {
             completedDownloads.pop();
           }
           
-          // Notifica o renderer sobre o novo download
-          win.webContents.send('download-completed', downloadInfo);
+          // Notifica o renderer sobre o novo download concluído
+          win.webContents.send('download-completed', completedDownloadInfo);
           
-          /*dialog.showMessageBox(win, {
-            type: 'info',
-            title: 'Download Complete',
-            message: `The download of "${fileName}" is complete!`,
-            buttons: ['OK']
-          });*/
         } else if (state === 'interrupted') {
-          /*dialog.showMessageBox(win, {
-            type: 'error',
-            title: 'Download Stoped',
-            message: `The download of the file "${fileName}" has been stopped.`,
-            buttons: ['OK']
-          });*/
+          // Notifica sobre download interrompido
+          win.webContents.send('download-interrupted', { fileName, downloadId });
         }
       });
     });

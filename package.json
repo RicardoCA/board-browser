@@ -1,6 +1,6 @@
 {
   "name": "BoardBrowser",
-  "version": "9.0.0",
+  "version": "10.0.0",
   "description": "Um navegador estilo Quadro com abas minimizáveis e arrastáveis",
   "main": "main.js",
   "scripts": {
@@ -25,7 +25,7 @@
     "electron-builder": "^24.0.0"
   },
   "build": {
-    "appId": "com.example.board-browser",
+    "appId": "com.board-browser",
     "productName": "Board Browser",
     "directories": {
       "output": "dist"

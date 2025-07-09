@@ -1420,7 +1420,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     <div class="downloads-modal" id="downloadsModal">
         <div class="downloads-content">
             <div class="downloads-header">
-                <h2>Finished Downloads</h2>
+                <h2>Downloads</h2>
                 <button class="close-btn" onclick="closeDownloadsModal()">×</button>
             </div>
             <div class="downloads-list" id="downloadsList">
@@ -1659,107 +1659,218 @@ const ctxResetTheme = document.getElementById("btnResetThemeColor");
 var isCopyModeActive = false;
 let currentThemeColor = localStorage.getItem('themeColor') || '#007acc';
 
-
 const { ipcRenderer } = require('electron');
 
-        let downloadsCount = 0;
+let downloadsCount = 0;
+const activeDownloads = new Map(); // Para armazenar downloads ativos
 
-        // Função para abrir o modal de downloads
-        function openDownloadsModal() {
-            document.getElementById('downloadsModal').style.display = 'block';
-            loadDownloads();
-        }
+function openDownloadsModal() {
+    document.getElementById('downloadsModal').style.display = 'block';
+    loadDownloads();
+    loadActiveDownloads();
+}
 
-        // Função para fechar o modal de downloads
-        function closeDownloadsModal() {
-            document.getElementById('downloadsModal').style.display = 'none';
-        }
+function closeDownloadsModal() {
+    document.getElementById('downloadsModal').style.display = 'none';
+}
 
-        // Função para carregar downloads
-        async function loadDownloads() {
-            try {
-                const downloads = await ipcRenderer.invoke('get-completed-downloads');
-                displayDownloads(downloads);
-            } catch (error) {
-                console.error('Erro ao carregar downloads:', error);
-            }
-        }
+async function loadDownloads() {
+    try {
+        const downloads = await ipcRenderer.invoke('get-completed-downloads');
+        displayDownloads(downloads);
+    } catch (error) {
+        console.error('Erro ao carregar downloads:', error);
+    }
+}
 
-        // Função para exibir downloads
-        function displayDownloads(downloads) {
-            const downloadsList = document.getElementById('downloadsList');
-            
-            if (downloads.length === 0) {
-                downloadsList.innerHTML = '<div class="empty-state"><p>No downloads have finished yet.</p></div>';
-                return;
-            }
+async function loadActiveDownloads() {
+    try {
+        const downloads = await ipcRenderer.invoke('get-active-downloads');
+        downloads.forEach(download => {
+            activeDownloads.set(download.id, download);
+        });
+        displayActiveDownloads();
+    } catch (error) {
+        console.error('Erro ao carregar downloads ativos:', error);
+    }
+}
 
-            downloadsList.innerHTML = downloads.map(download => `
-                <div class="download-item">
-                    <div class="download-info">
-                        <div class="download-name">${download.fileName}</div>
-                        <div class="download-details">
-                            ${download.completedAt} • ${formatFileSize(download.size)}
-                        </div>
-                    </div>
-                    
+function displayDownloads(downloads) {
+    const downloadsList = document.getElementById('downloadsList');
+    
+    // Primeiro, exibe downloads ativos
+    displayActiveDownloads();
+    
+    // Depois, adiciona downloads concluídos
+    const completedHtml = downloads.length > 0 ? downloads.map(download => `
+        <div class="download-item completed">
+            <div class="download-info">
+                <div class="download-name">${download.fileName}</div>
+                <div class="download-details">
+                    ${download.completedAt} • ${formatFileSize(download.size)}
                 </div>
-            `).join('');
-        }
+            </div>
+            <div class="download-status completed">✓ Finished</div>
+        </div>
+    `).join('') : '';
+    
+    if (activeDownloads.size === 0 && downloads.length === 0) {
+        downloadsList.innerHTML = '<div class="empty-state"><p>No downloads have finished yet.</p></div>';
+    } else {
+        const activeHtml = displayActiveDownloads();
+        downloadsList.innerHTML = activeHtml + completedHtml;
+    }
+}
 
-        // Função para limpar downloads
-        async function clearDownloads() {
-            try {
-                await ipcRenderer.invoke('clear-completed-downloads');
-                downloadsCount = 0;
-                updateDownloadsBadge();
-                displayDownloads([]);
-            } catch (error) {
-                console.error('Erro ao limpar downloads:', error);
-            }
-        }
+function displayActiveDownloads() {
+    if (activeDownloads.size === 0) return '';
+    
+    const activeHtml = Array.from(activeDownloads.values()).map(download => `
+        <div class="download-item active" id="download-${download.id}">
+            <div class="download-info">
+                <div class="download-name">${download.fileName}</div>
+                <div class="download-details">
+                    ${formatFileSize(download.receivedBytes)} / ${formatFileSize(download.totalBytes)} • ${download.progress.toFixed(1)}%
+                </div>
+            </div>
+            <div class="download-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${download.progress}%"></div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    // Se o modal estiver aberto, atualiza o conteúdo
+    const downloadsList = document.getElementById('downloadsList');
+    if (downloadsList && activeDownloads.size > 0) {
+        // Preserva downloads concluídos e atualiza apenas os ativos
+        const completedItems = downloadsList.querySelectorAll('.download-item.completed');
+        const completedHtml = Array.from(completedItems).map(item => item.outerHTML).join('');
+        downloadsList.innerHTML = activeHtml + completedHtml;
+    }
+    
+    return activeHtml;
+}
 
-        // Função para formatar tamanho do arquivo
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
+async function clearDownloads() {
+    try {
+        await ipcRenderer.invoke('clear-completed-downloads');
+        downloadsCount = 0;
+        updateDownloadsBadge();
+        displayDownloads([]);
+    } catch (error) {
+        console.error('Erro ao limpar downloads:', error);
+    }
+}
 
-        // Função para abrir arquivo
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function updateDownloadsBadge() {
+    const badge = document.getElementById('downloadsBadge');
+    const totalDownloads = downloadsCount + activeDownloads.size;
+    
+    if (totalDownloads > 0) {
+        badge.textContent = totalDownloads;
+        badge.style.display = 'inline-block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+ipcRenderer.on('download-started', (event, downloadInfo) => {
+    activeDownloads.set(downloadInfo.id, downloadInfo);
+    updateDownloadsBadge();
+    
+    // Se o modal estiver aberto, atualiza a exibição
+    if (document.getElementById('downloadsModal').style.display === 'block') {
+        displayActiveDownloads();
+    }
+});
+
+// Listener para progresso de download
+ipcRenderer.on('download-progress', (event, progressInfo) => {
+    const download = activeDownloads.get(progressInfo.id);
+    if (download) {
+        download.receivedBytes = progressInfo.receivedBytes;
+        download.totalBytes = progressInfo.totalBytes;
+        download.progress = progressInfo.progress;
         
-
-        // Função para atualizar badge de downloads
-        function updateDownloadsBadge() {
-            const badge = document.getElementById('downloadsBadge');
-            if (downloadsCount > 0) {
-                badge.textContent = downloadsCount;
-                badge.style.display = 'inline-block';
-            } else {
-                badge.style.display = 'none';
+        activeDownloads.set(progressInfo.id, download);
+        
+        // Atualiza o item específico se o modal estiver aberto
+        const downloadElement = document.getElementById(`download-${progressInfo.id}`);
+        if (downloadElement) {
+            const detailsElement = downloadElement.querySelector('.download-details');
+            const progressFill = downloadElement.querySelector('.progress-fill');
+            
+            if (detailsElement) {
+                detailsElement.textContent = `${formatFileSize(progressInfo.receivedBytes)} / ${formatFileSize(progressInfo.totalBytes)} • ${progressInfo.progress.toFixed(1)}%`;
+            }
+            
+            if (progressFill) {
+                progressFill.style.width = `${progressInfo.progress}%`;
             }
         }
+    }
+});
 
-        // Listener para novos downloads
-        ipcRenderer.on('download-completed', (event, downloadInfo) => {
-            downloadsCount++;
-            updateDownloadsBadge();
-        });
+// Listener para download removido (concluído ou interrompido)
+ipcRenderer.on('download-removed', (event, downloadId) => {
+    activeDownloads.delete(downloadId);
+    updateDownloadsBadge();
+    
+    // Remove o elemento do DOM se o modal estiver aberto
+    const downloadElement = document.getElementById(`download-${downloadId}`);
+    if (downloadElement) {
+        downloadElement.remove();
+    }
+});
 
-        // Fechar modal ao clicar fora
-        document.getElementById('downloadsModal').addEventListener('click', (e) => {
-            if (e.target.id === 'downloadsModal') {
-                closeDownloadsModal();
-            }
-        });
+// Listener para novos downloads concluídos
+ipcRenderer.on('download-completed', (event, downloadInfo) => {
+    downloadsCount++;
+    updateDownloadsBadge();
+    
+    // Se o modal estiver aberto, recarrega os downloads
+    if (document.getElementById('downloadsModal').style.display === 'block') {
+        loadDownloads();
+    }
+});
 
-        // Carregar contagem inicial de downloads
-        loadDownloads().then(downloads => {
-            downloadsCount = downloads.length;
-            updateDownloadsBadge();
-        });
+// Listener para downloads interrompidos
+ipcRenderer.on('download-interrupted', (event, info) => {
+    console.log('Download interrompido:', info.fileName);
+    // Você pode adicionar uma notificação aqui se desejar
+});
+
+// Fechar modal ao clicar fora
+document.getElementById('downloadsModal').addEventListener('click', (e) => {
+    if (e.target.id === 'downloadsModal') {
+        closeDownloadsModal();
+    }
+});
+
+// Carregar contagem inicial de downloads
+loadDownloads().then(downloads => {
+    downloadsCount = downloads.length;
+    updateDownloadsBadge();
+});
+
+// Carregar downloads ativos iniciais
+loadActiveDownloads().then(() => {
+    updateDownloadsBadge();
+});
+
+
+
+
 
 ctxChangeTheme.addEventListener('click', () => {
     showThemeColorModal();
