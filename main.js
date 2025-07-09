@@ -19,9 +19,10 @@ function createWindow() {
   Menu.setApplicationMenu(null);
 
   // Controle para evitar múltiplos alerts
-  const activeDownloads = new Map(); // Mudança para Map para armazenar mais informações
+  const activeDownloads = new Map();
   const recentlyCompleted = new Set();
-  const completedDownloads = []; // Array para armazenar downloads concluídos
+  const completedDownloads = [];
+  const webContentsWithListeners = new Set(); // Para evitar listeners duplicados
 
   // Handler para enviar lista de downloads para o renderer
   ipcMain.handle('get-completed-downloads', () => {
@@ -41,14 +42,37 @@ function createWindow() {
 
   // Função para configurar listeners de download
   function setupDownloadListener(webContents) {
+    // Evita duplicar listeners no mesmo webContents
+    if (webContentsWithListeners.has(webContents.id)) {
+      return;
+    }
+    webContentsWithListeners.add(webContents.id);
+    
+    // Remove o ID quando o webContents for destruído
+    webContents.on('destroyed', () => {
+      webContentsWithListeners.delete(webContents.id);
+    });
+
     webContents.session.on('will-download', (event, item, webContents) => {
-      const fileName = item.getFilename();
-      const downloadId = `${fileName}_${Date.now()}`;
+      const originalFileName = item.getFilename();
+      const downloadId = `${originalFileName}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Verifica se este download já existe (evita duplicatas de múltiplos webviews)
+      const existingDownload = Array.from(activeDownloads.values()).find(dl => 
+        dl.originalFileName === originalFileName && 
+        Math.abs(Date.now() - dl.startTime.getTime()) < 1000 // dentro de 1 segundo
+      );
+      
+      if (existingDownload) {
+        console.log('Download duplicado detectado, ignorando:', originalFileName);
+        return;
+      }
       
       // Cria objeto de download ativo
       const downloadInfo = {
         id: downloadId,
-        fileName: fileName,
+        fileName: originalFileName, // Nome que será exibido (será atualizado)
+        originalFileName: originalFileName,
         totalBytes: item.getTotalBytes(),
         receivedBytes: 0,
         progress: 0,
@@ -83,20 +107,26 @@ function createWindow() {
             receivedBytes,
             totalBytes,
             progress,
-            fileName
+            fileName: downloadInfo.fileName
           });
         }
       });
       
       item.on('done', (event, state) => {
+        // Obtém o nome final do arquivo (após save dialog)
+        const finalFileName = path.basename(item.getSavePath());
+        
+        // Atualiza o nome no objeto de download
+        downloadInfo.fileName = finalFileName;
+        
         // Remove do Map de downloads ativos
         activeDownloads.delete(downloadId);
         
         // Notifica que o download ativo foi removido
         win.webContents.send('download-removed', downloadId);
         
-        // Verifica se já não foi mostrado recentemente
-        const completedId = `${fileName}_${state}`;
+        // Verifica se já não foi mostrado recentemente (usando nome final)
+        const completedId = `${finalFileName}_${state}`;
         if (recentlyCompleted.has(completedId)) {
           return; // Já foi mostrado, não mostra novamente
         }
@@ -112,12 +142,12 @@ function createWindow() {
         if (state === 'completed') {
           // Adiciona o download à lista de concluídos
           const completedDownloadInfo = {
-            fileName: fileName,
+            fileName: finalFileName, // Usa o nome final
             completedAt: new Date().toLocaleString('pt-BR'),
             path: item.getSavePath(),
             size: item.getTotalBytes()
           };
-          completedDownloads.unshift(completedDownloadInfo); // Adiciona no início da lista
+          completedDownloads.unshift(completedDownloadInfo);
           
           // Limita a lista a 50 downloads para não usar muita memória
           if (completedDownloads.length > 50) {
@@ -129,7 +159,7 @@ function createWindow() {
           
         } else if (state === 'interrupted') {
           // Notifica sobre download interrompido
-          win.webContents.send('download-interrupted', { fileName, downloadId });
+          win.webContents.send('download-interrupted', { fileName: finalFileName, downloadId });
         }
       });
     });
