@@ -3338,12 +3338,15 @@ function createTab(url = defaultStartPage, savedState = null, targetBoardId = nu
                         let textToCopy = '';
                         if (e.target.href) {
                             textToCopy = e.target.href;
+                            alert('URL Copied: ' + textToCopy);
                         } else if (e.target.src) {
                             textToCopy = e.target.src;
+                            alert('URL Copied: ' + textToCopy);
                         } else {
                             const selection = window.getSelection();
                             if (selection && selection.toString().trim() !== '') {
                                 textToCopy = selection.toString();
+                                alert('Text Copied: ' + textToCopy);
                             } else {
                                 return; // Não copia se não há conteúdo selecionado
                             }
