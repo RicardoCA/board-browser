@@ -4677,6 +4677,22 @@ document.addEventListener('keydown', (e) => {
         showHistoryModal();
         moreOptionsMenu.style.display = 'none';
     }
+    if (e.key === 'F12') {
+        // Encontra todos os webviews e abre o DevTools para o que está em foco
+        const webviews = document.querySelectorAll('webview');
+        webviews.forEach(webview => {
+            const tabFrame = webview.closest('.tab-frame');
+            if (tabFrame && tabFrame.classList.contains('maximized-tab')) {
+                webview.openDevTools();
+                return; // Encontrou um webview maximizado, pode parar
+            }
+            
+            if (webview.classList.contains('focused') || 
+                webview.parentElement.parentElement.classList.contains('focused')) {
+                webview.openDevTools();
+            }
+        });
+    }
 });
 
 boardsContainer.addEventListener('dragstart', (e) => {
