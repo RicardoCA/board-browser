@@ -1350,6 +1350,15 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
             background-color: #c0392b;
         }
 
+        .btn-ad-blocker.active {
+            background-color: #4CAF50 !important;
+            color: white !important;
+        }
+
+        .btn-ad-blocker.active svg {
+            fill: white;
+        }
+
 </style>
 
 </head>
@@ -3273,6 +3282,9 @@ function createTab(url = defaultStartPage, savedState = null, targetBoardId = nu
     <div class="suggestions-box"></div>
     </div>
     <div class="controls">
+    <button title="Ad Blocker" class="btn-ad-blocker">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-icon lucide-shield"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+    </button>
     <button title="Copy Elements" class="btn-copy-elements">
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-icon lucide-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
     </button>
@@ -3311,7 +3323,209 @@ function createTab(url = defaultStartPage, savedState = null, targetBoardId = nu
 
     const webview = document.createElement('webview');
 
+    let isAdBlockerActive = false;
     const btnCopyElements = header.querySelector('.btn-copy-elements');
+
+
+    const getAdBlockRules = () => {
+    return `
+    (function() {
+        const adSelectors = [
+            // Seletores gerais de anúncios
+            '[class*="ad-"]', '[class*="ads-"]', '[class*="advertisement"]',
+            '[id*="ad-"]', '[id*="ads-"]', '[id*="advertisement"]',
+            '.ad', '.ads', '.advertisement', '.banner', '.popup',
+            '[class*="-ad"]', '[id*="-ad"]', // Para padrões como "mid-ad", "right-ad"
+            '.ad-unit', '.ad-placeholder', '.ad-label',
+            '.ad-slot', '.ad-area', '.ad-zone',
+            '.advert', '.advertising', '.ad-container',
+            '.ad-wrapper', '.ad-banner', '.ad-box',
+            '.ad-link', '.ad-text', '.ad-image',
+            '.advertorial', '.sponsored-post', '.promoted-content',
+            '.paid-content', '.ad-wall', '.ad-sticky',
+            '.ad-popup', '.ad-overlay', '.ad-interstitial',
+            // Redes de anúncios específicas
+            '.taboola', '.outbrain', '.revcontent',
+            '.adform', '.adtech', '.doubleclick',
+            '.google-ads', '.adsense', '.adchoices',
+            // Elementos de vídeo
+            '.video-ads', '.preroll', '.midroll',
+            '.postroll', '.ad-break', '.ad-skip',
+            
+            // Seletores específicos para sites de notícias
+            '.adsbygoogle', '.google-ads', '.googlesyndication',
+            '.ad-container', '.ad-wrapper', '.ad-banner', '.ad-slot',
+            '.sponsored', '.sponsored-content', '.promotion',
+            'adservice.google.com', 'pagead2.googlesyndication.com',
+            'securepubads.g.doubleclick.net', 'ads.pubmatic.com',
+            'adsrvr.org', 'criteo.com', 'adnxs.com',
+            'amazon-adsystem.com', 'adsystem.com', 'advertising.com',
+            'adroll.com', 'zemanta.com', 'quantserve.com',
+            'scorecardresearch.com', 'rlcdn.com', 'bluekai.com',
+            'agkn.com', 'mathtag.com', 'tapad.com',
+            'advertising.amazon.com', 'ads.yahoo.com', 'ads.bing.com',
+            'ads.facebook.com', 'an.yandex.ru', 'ads.tiktok.com',
+            'ads.twitter.com', 'ads.linkedin.com', 'ads.reddit.com',
+            
+            // YouTube específico
+            '.ytp-ad-module', '.video-ads', '.ytp-ad-overlay-container',
+            '.ytp-ad-text-overlay', '.ytp-ad-player-overlay',
+            '.masthead-ad-control', '.ytd-promoted-sparkles-web-renderer',
+            '.ytd-compact-promoted-video-renderer', '.ytd-promoted-video-renderer',
+            '.ytd-display-ad-renderer', '.ytd-video-masthead-ad-advertiser-info-renderer',
+            
+            // Outros sites comuns
+            '.sidebar-ad', '.header-ad', '.footer-ad', '.inline-ad',
+            '.native-ad', '.content-ad', '.video-ad', '.display-ad',
+            '.square-ad', '.leaderboard-ad', '.skyscraper-ad',
+            
+            // Termos em outros idiomas
+            '[class*="publicidade"]', '[class*="anuncio"]', '[class*="reclame"]',
+            '[id*="publicidade"]', '[id*="anuncio"]', '[id*="reclame"]'
+        ];
+        
+        const adDomains = [
+            'googlesyndication.com', 'googleadservices.com', 'doubleclick.net',
+            'googletagmanager.com', 'google-analytics.com', 'googletagservices.com',
+            'facebook.com/tr', 'connect.facebook.net', 'amazon-adsystem.com',
+            'adsystem.amazon.com', 'outbrain.com', 'taboola.com',
+            'criteo.com', 'adsrvr.org', 'rubiconproject.com',
+            'pubmatic.com', 'openx.com', 'adsafeprotected.com'
+        ];
+        
+        function removeAds() {
+            // Remove elementos por seletores
+            adSelectors.forEach(selector => {
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(el => {
+                        el.style.display = 'none !important';
+                        el.style.visibility = 'hidden !important';
+                        el.style.opacity = '0 !important';
+                        el.style.height = '0 !important';
+                        el.style.width = '0 !important';
+                    });
+                } catch(e) {}
+            });
+            
+            // Remove iframes e scripts de anúncios
+            const iframes = document.querySelectorAll('iframe');
+            iframes.forEach(iframe => {
+                if (iframe.src) {
+                    const src = iframe.src.toLowerCase();
+                    if (adDomains.some(domain => src.includes(domain)) || 
+                        src.includes('ad') || src.includes('banner') || src.includes('popup')) {
+                        iframe.style.display = 'none !important';
+                        iframe.remove();
+                    }
+                }
+            });
+            
+            // Remove scripts de anúncios
+            const scripts = document.querySelectorAll('script');
+            scripts.forEach(script => {
+                if (script.src) {
+                    const src = script.src.toLowerCase();
+                    if (adDomains.some(domain => src.includes(domain))) {
+                        script.remove();
+                    }
+                }
+            });
+            
+            // YouTube específico - remove anúncios em vídeos
+            const ytAds = document.querySelectorAll('.ytp-ad-skip-button, .ytp-ad-skip-button-modern');
+            ytAds.forEach(skipBtn => {
+                if (skipBtn.style.display !== 'none') {
+                    skipBtn.click();
+                }
+            });
+            
+            // Remove overlay de anúncios
+            const overlays = document.querySelectorAll('[class*="overlay"]');
+            overlays.forEach(overlay => {
+                const text = overlay.textContent.toLowerCase();
+                if (text.includes('ad') || text.includes('anúncio') || text.includes('publicidade')) {
+                    overlay.style.display = 'none !important';
+                }
+            });
+        }
+        
+        // Executa imediatamente
+        removeAds();
+        
+        // Observa mudanças no DOM
+        const observer = new MutationObserver(() => {
+            removeAds();
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class', 'id', 'src']
+        });
+        
+        // Executa periodicamente para pegar anúncios dinâmicos
+        setInterval(removeAds, 2000);
+        
+        // Bloqueia requisições de anúncios
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            const url = args[0];
+            if (typeof url === 'string' && adDomains.some(domain => url.includes(domain))) {
+                return Promise.reject(new Error('Blocked by ad blocker'));
+            }
+            return originalFetch.apply(this, args);
+        };
+        
+        // Bloqueia XMLHttpRequest de anúncios
+        const originalXHR = window.XMLHttpRequest.prototype.open;
+        window.XMLHttpRequest.prototype.open = function(method, url) {
+            if (typeof url === 'string' && adDomains.some(domain => url.includes(domain))) {
+                return;
+            }
+            return originalXHR.apply(this, arguments);
+        };
+        
+        console.log('Ad Blocker ativado');
+    })();
+    `;
+};
+
+const btnAdBlocker = header.querySelector('.btn-ad-blocker');
+
+// Event listener para o botão de ad blocker
+btnAdBlocker.addEventListener('click', (e) => {
+    e.stopPropagation();
+    isAdBlockerActive = !isAdBlockerActive;
+    btnAdBlocker.classList.toggle('active');
+    
+    try {
+        if (isAdBlockerActive) {
+            // Ativa o ad blocker
+            webview.executeJavaScript(getAdBlockRules()).catch(err => {
+                console.error('Failed to activate ad blocker:', err);
+                isAdBlockerActive = false;
+                btnAdBlocker.classList.remove('active');
+            });
+            
+            btnAdBlocker.title = 'Disable Ad Blocker';
+            btnAdBlocker.style.color = '#4CAF50';
+            webview.reload();
+        } else {
+            // Desativa o ad blocker (recarrega a página)
+            webview.reload();
+            btnAdBlocker.title = 'Ad Blocker';
+            btnAdBlocker.style.color = '';
+        }
+    } catch (err) {
+        console.error('Error toggling ad blocker:', err);
+        isAdBlockerActive = false;
+        btnAdBlocker.classList.remove('active');
+    }
+});
+
+
 
     // Event listener para o botão de cópia - CORRIGIDO
     btnCopyElements.addEventListener('click', (e) => {
@@ -3468,12 +3682,29 @@ function createTab(url = defaultStartPage, savedState = null, targetBoardId = nu
     webview.addEventListener('did-navigate', (e) => {
         applyChromeUserAgentIfNeeded(e.url);
         addToHistory(e.url);
+
+        if (isAdBlockerActive) {
+            setTimeout(() => {
+                webview.executeJavaScript(getAdBlockRules()).catch(err => {
+                    console.error('Failed to reapply ad blocker after navigation:', err);
+                });
+            }, 1000);
+        }
+
     });
 
     // Monitora redirecionamentos (como após login)
     webview.addEventListener('did-navigate-in-page', (e) => {
         if (e.isMainFrame) {
             applyChromeUserAgentIfNeeded(e.url);
+        }
+
+        if (isAdBlockerActive) {
+            setTimeout(() => {
+                webview.executeJavaScript(getAdBlockRules()).catch(err => {
+                    console.error('Failed to reapply ad blocker after in-page navigation:', err);
+                });
+            }, 1000);
         }
     });
 
