@@ -182,7 +182,7 @@ function createWindow() {
     }
   });
 
-  win.loadFile('index_teste.html');
+  win.loadFile('index.html');
   //win.webContents.openDevTools();
 }
 

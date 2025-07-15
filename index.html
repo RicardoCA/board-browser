@@ -1359,6 +1359,88 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
             fill: white;
         }
 
+        /* Credentials Modal Styles */
+#credentialsModal {
+    max-width: 600px;
+    background: #3a3a3a; /* cor menos escura */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* centraliza */
+    z-index: 100000;
+}
+
+.credentials-list {
+    max-height: 60vh;
+    overflow-y: auto;
+    margin-bottom: 15px;
+}
+
+.credential-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 8px;
+    background: #444;
+    border-radius: 4px;
+}
+
+.credential-item-info {
+    flex: 1;
+    word-break: break-all;
+}
+
+.credential-item-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.credential-item button {
+    background: #555;
+    border: none;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.credential-item button:hover {
+    background: #666;
+}
+
+.credential-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.credential-form input {
+    width: 100%;
+    padding: 8px;
+    background: #333;
+    border: 1px solid #555;
+    color: white;
+    border-radius: 4px;
+}
+
+.credential-form button {
+    align-self: flex-end;
+    padding: 8px 16px;
+    background: #007acc;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.credential-form button:hover {
+    background: #006bb3;
+}
+
 </style>
 
 </head>
@@ -1424,6 +1506,30 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     <span id="zoom-level">100%</span>
     <button id="reset-zoom">⟲</button>
   </div>
+
+  <!-- Credentials Modal -->
+<div class="modal-overlay" id="credentialsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Saved Logins</h3>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="credentials-list" id="credentialsList">
+                <!-- Credentials will be listed here -->
+            </div>
+            <div class="form-group">
+                <h4>Add New Login</h4>
+                <div class="credential-form">
+                    <input type="text" id="credentialSite" placeholder="Website (e.g., reddit.com)" required>
+                    <input type="text" id="credentialUsername" placeholder="Username or Email" required>
+                    <input type="password" id="credentialPassword" placeholder="Password" required>
+                    <button id="btnSaveCredential">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
   <!-- Modal de Downloads -->
     <div class="downloads-modal" id="downloadsModal">
@@ -1667,6 +1773,276 @@ const ctxResetTheme = document.getElementById("btnResetThemeColor");
 
 var isCopyModeActive = false;
 let currentThemeColor = localStorage.getItem('themeColor') || '#007acc';
+
+let savedCredentials = JSON.parse(localStorage.getItem('savedCredentials')) || [];
+const credentialsModal = document.getElementById('credentialsModal');
+const credentialsList = document.getElementById('credentialsList');
+const credentialSiteInput = document.getElementById('credentialSite');
+const credentialUsernameInput = document.getElementById('credentialUsername');
+const credentialPasswordInput = document.getElementById('credentialPassword');
+const btnSaveCredential = document.getElementById('btnSaveCredential');
+
+const btnCredentials = document.createElement('button');
+btnCredentials.id = 'btnCredentials';
+btnCredentials.innerHTML = '🔑 Saved Logins';
+moreOptionsMenu.insertBefore(btnCredentials, btnRenameBoards);
+
+btnCredentials.addEventListener('click', () => {
+    showCredentialsModal();
+    moreOptionsMenu.style.display = 'none';
+});
+
+function showCredentialsModal() {
+    updateCredentialsList();
+    credentialsModal.style.display = 'flex';
+}
+
+function updateCredentialsList() {
+    credentialsList.innerHTML = '';
+    
+    if (savedCredentials.length === 0) {
+        credentialsList.innerHTML = '<div class="no-credentials">No saved logins yet.</div>';
+        return;
+    }
+    
+    savedCredentials.forEach((credential, index) => {
+        const item = document.createElement('div');
+        item.classList.add('credential-item');
+        
+        item.innerHTML = `
+            <div class="credential-item-info">
+                <strong>${credential.site}</strong><br>
+                <small>${credential.username}</small>
+            </div>
+            <div class="credential-item-actions">
+                <button class="btn-use-credential" data-index="${index}" title="Use this login">Use</button>
+                <button class="btn-delete-credential" data-index="${index}" title="Delete">×</button>
+            </div>
+        `;
+        
+        credentialsList.appendChild(item);
+    });
+    
+    // Add event listeners to the buttons
+    document.querySelectorAll('.btn-use-credential').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = e.target.getAttribute('data-index');
+            useCredential(index);
+        });
+    });
+    
+    document.querySelectorAll('.btn-delete-credential').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = e.target.getAttribute('data-index');
+            deleteCredential(index);
+        });
+    });
+}
+
+btnSaveCredential.addEventListener('click', () => {
+    const site = credentialSiteInput.value.trim();
+    const username = credentialUsernameInput.value.trim();
+    const password = credentialPasswordInput.value.trim();
+    
+    if (!site || !username || !password) {
+        showMessage('Please fill all fields');
+        return;
+    }
+    
+    // Check if credential already exists for this site and username
+    const existingIndex = savedCredentials.findIndex(
+        c => c.site === site && c.username === username
+    );
+    
+    if (existingIndex >= 0) {
+        // Update existing credential
+        savedCredentials[existingIndex].password = password;
+    } else {
+        // Add new credential
+        savedCredentials.push({ site, username, password });
+    }
+    
+    saveCredentials();
+    updateCredentialsList();
+    
+    // Clear form
+    credentialSiteInput.value = '';
+    credentialUsernameInput.value = '';
+    credentialPasswordInput.value = '';
+});
+
+function saveCredentials() {
+    localStorage.setItem('savedCredentials', JSON.stringify(savedCredentials));
+}
+
+function deleteCredential(index) {
+    if (confirm('Delete this saved login?')) {
+        savedCredentials.splice(index, 1);
+        saveCredentials();
+        updateCredentialsList();
+    }
+}
+
+function useCredential(index) {
+    const credential = savedCredentials[index];
+    if (!credential) return;
+
+    // Garante que existe um board
+    if (!currentBoardId) {
+        showMessage('No board open');
+        return;
+    }
+
+    const board = boards[currentBoardId];
+
+    // Se não há activeTabId, tenta pegar o primeiro tab do board
+    if (!activeTabId && board.tabs.length > 0) {
+        activeTabId = board.tabs[0].id;
+    }
+
+    const tab = board.tabs.find(t => t.id === activeTabId);
+
+    if (!tab) {
+        showMessage('Please open a webview first');
+        return;
+    }
+
+    // Injeta o login no webview ativo
+    tab.webview.executeJavaScript(`(function() {
+            // Find all input fields
+            const inputs = document.querySelectorAll('input');
+            let usernameField, passwordField;
+            
+            // Try to identify username/email and password fields
+            inputs.forEach(input => {
+                const lowerType = input.type.toLowerCase();
+                const lowerName = (input.name || '').toLowerCase();
+                const lowerId = (input.id || '').toLowerCase();
+                
+                if (lowerType === 'email' || lowerType === 'text' || 
+                    lowerName.includes('email') || lowerName.includes('user') || 
+                    lowerId.includes('email') || lowerId.includes('user')) {
+                    usernameField = input;
+                }
+                
+                if (lowerType === 'password' || 
+                    lowerName.includes('pass') || 
+                    lowerId.includes('pass')) {
+                    passwordField = input;
+                }
+            });
+            
+            // Fill the fields if found
+            if (usernameField) {
+                usernameField.value = '${credential.username.replace(/'/g, "\\'")}';
+                // Trigger change event
+                const event = new Event('input', { bubbles: true });
+                usernameField.dispatchEvent(event);
+            }
+            
+            if (passwordField) {
+                passwordField.value = '${credential.password.replace(/'/g, "\\'")}';
+                // Trigger change event
+                const event = new Event('input', { bubbles: true });
+                passwordField.dispatchEvent(event);
+            }
+            
+            // Try to find and click the submit button
+            if (usernameField && passwordField) {
+                // Look for a submit button near the form
+                let form = usernameField.closest('form');
+                if (!form) form = passwordField.closest('form');
+                
+                if (form) {
+                    const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+                    if (submitButton) {
+                        submitButton.click();
+                    }
+                }
+            }
+            
+            return {
+                usernameField: !!usernameField,
+                passwordField: !!passwordField
+            };
+        })();
+    `).then(result => {
+        if (!result.usernameField || !result.passwordField) {
+            showMessage('Could not find login fields on this page. Please make sure you\'re on the login page.');
+            
+        }
+        credentialsModal.style.display = 'none';
+    }).catch(err => {
+        console.error('Error injecting credentials:', err);
+        showMessage('Error injecting credentials. The page may have restrictions.');
+        
+    });
+}
+
+function showMessage(message) {
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '50%';
+    modal.style.left = '50%';
+    modal.style.transform = 'translate(-50%, -50%)';
+    modal.style.background = '#333';
+    modal.style.color = 'white';
+    modal.style.padding = '20px';
+    modal.style.borderRadius = '8px';
+    modal.style.zIndex = 100000;
+    modal.innerText = message;
+    document.body.appendChild(modal);
+
+    setTimeout(() => {
+        modal.remove();
+    }, 2000);
+}
+
+
+// Auto-fill credentials when page loads
+function setupAutoFill() {
+    if (!currentBoardId || !activeTabId) return;
+    
+    const board = boards[currentBoardId];
+    const tab = board.tabs.find(t => t.id === activeTabId);
+    if (!tab) return;
+    
+    tab.webview.addEventListener('did-navigate', (e) => {
+        const url = e.url;
+        if (!url) return;
+        
+        // Find matching credentials for this domain
+        const domain = new URL(url).hostname.replace('www.', '');
+        const matchingCreds = savedCredentials.filter(c => 
+            url.includes(c.site) || domain.includes(c.site.replace('www.', ''))
+        );
+        
+        if (matchingCreds.length > 0) {
+            // Use the first matching credential
+            tab.webview.executeJavaScript(`
+                (function() {
+                    // Check if we're on a login page by looking for password fields
+                    const passwordFields = document.querySelectorAll('input[type="password"]');
+                    if (passwordFields.length === 0) return false;
+                    
+                    return true;
+                })();
+            `).then(isLoginPage => {
+                if (isLoginPage) {
+                    useCredential(savedCredentials.indexOf(matchingCreds[0]));
+                }
+            });
+        }
+    });
+}
+
+// Initialize auto-fill when a new tab is created
+const originalCreateTab = createTab;
+createTab = function(url, savedState, targetBoardId) {
+    const tabId = originalCreateTab(url, savedState, targetBoardId);
+    setTimeout(() => setupAutoFill(), 500);
+    return tabId;
+};
 
 const { ipcRenderer } = require('electron');
 
@@ -2039,7 +2415,7 @@ document.getElementById('btnSaveThemeColor').addEventListener('click', () => {
         applyThemeColor();
         document.getElementById('themeColorModal').style.display = 'none';
     } else {
-        alert('Please select a valid color.');
+        showMessage('Please select a valid color.');
     }
 });
 
@@ -2087,7 +2463,8 @@ btnClearHistory.addEventListener('click', () => {
     if (confirm("Are you sure you want to clear the browsing history?")) {
         browsingHistory = [];
         localStorage.setItem('browsingHistory', JSON.stringify(browsingHistory));
-        alert("Browsing history cleared.");
+        showMessage('Browsing history cleared.');
+        
     }
 });
 
@@ -2240,7 +2617,8 @@ btnClean.addEventListener('click', (e) => {
     // Confirmação antes de limpar
     if (confirm('Are you sure you want to clear the board?')) {
         clearDrawing();
-        alert('Board cleaned.');
+        showMessage('Board cleaned.');
+        
     }
 });
 
@@ -2909,7 +3287,7 @@ btnImportConfirm.addEventListener('click', () => {
             saveState();
 
         } catch (error) {
-            alert('Erro ao importar arquivo: ' + error.message);
+            showMessage("Error in import file: " + error.message);
             console.error('Erro ao importar:', error);
         }
     };
@@ -3211,7 +3589,7 @@ function switchBoard(boardId, initialLoad = false) {
 
 function closeBoard(boardId) {
     if (Object.keys(boards).length <= 1) {
-        alert('You cannot close the last board.');
+        showMessage("You cannot close the last board.");
         return;
     }
 
@@ -3831,7 +4209,7 @@ btnAdBlocker.addEventListener('click', (e) => {
 
         } catch (error) {
             console.error('Error exporting HTML:', error);
-            alert('Failed to export HTML. The page may have restrictions.');
+            showMessage('Failed to export HTML. The page may have restrictions.');
         }
     });
 
