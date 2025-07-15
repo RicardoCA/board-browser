@@ -684,6 +684,10 @@ webview, iframe {
     color: white;
 }
 
+.form-group input {
+    width: calc(100% - 16px);
+}
+
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
@@ -1441,10 +1445,211 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     background: #006bb3;
 }
 
+#sidebar {
+  position: fixed;
+  top: 40px;
+  left: 0;
+  width: 340px;
+  height: calc(100% - 40px);
+  background: #333;
+  color: #fff;
+  z-index: 1200;
+  box-shadow: 2px 0 16px rgba(0,0,0,0.25);
+  transform: translateX(-100%);
+  transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+  display: flex;
+  flex-direction: column;
+}
+#sidebar.open {
+  transform: translateX(0);
+}
+#sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 12px 20px;
+  font-size: 20px;
+  font-weight: bold;
+  border-bottom: 1px solid #222;
+  background: #333;
+}
+#sidebar-close {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 28px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+#sidebar-content {
+  flex: 1 1 0;
+  overflow-y: auto;
+  padding: 20px;
+  background: #333;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+#sidebar .form-group label,
+#sidebar .form-group input,
+#sidebar .form-group select,
+#sidebar .form-group button {
+  color: #fff;
+}
+#sidebar .form-group input,
+#sidebar .form-group select {
+  background: #1e1e1e;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 10px;
+}
+#sidebar .form-group input:focus,
+#sidebar .form-group select:focus {
+  outline: none;
+  border-color: #555;
+}
+#sidebar .form-group button,
+#sidebar .modal-button {
+  background: #333;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  color: #fff;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.15s;
+}
+#sidebar .form-group button:hover,
+#sidebar .modal-button:hover {
+  background: #444;
+}
+#sidebar .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  background: #333;
+}
+#sidebar .favorites-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+  overflow-y: auto;
+  padding: 0;
+}
+#sidebar .favorite-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  cursor: pointer;
+  padding: 12px 10px;
+  border-radius: 0;
+  background: transparent;
+  transition: background 0.2s;
+  min-height: 48px;
+}
+#sidebar .favorite-item:hover {
+  background: #222;
+}
+#sidebar .favorite-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  margin-right: 12px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 2px;
+}
+#sidebar .favorite-title {
+  color: #fff;
+  font-size: 15px;
+  text-align: left;
+  word-break: break-word;
+  max-width: 100%;
+}
+#sidebar .no-favorites,
+#sidebar .no-history,
+#sidebar .no-credentials {
+  color: #aaa;
+  text-align: center;
+  padding: 20px;
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#sidebar .history-list {
+  flex: 1 1 0;
+  overflow-y: auto;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+#sidebar .history-item {
+  padding: 12px 10px;
+  margin-bottom: 0;
+  background: transparent;
+  border-radius: 0;
+  cursor: pointer;
+  word-break: break-all;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+}
+#sidebar .history-item:hover {
+  background: #222;
+}
+#sidebar .credentials-list {
+  flex: 1 1 0;
+  overflow-y: auto;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+#sidebar .credential-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 10px;
+  margin-bottom: 0;
+  background: transparent;
+  border-radius: 0;
+  min-height: 48px;
+}
+#sidebar .credential-item-info {
+  flex: 1;
+  word-break: break-all;
+}
+#sidebar .credential-item-actions {
+  display: flex;
+  gap: 5px;
+}
+#sidebar .credential-item button {
+  background: #555;
+  border: none;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+#sidebar .credential-item button:hover {
+  background: #666;
+}
+.downloads-modal { display: none !important; }
 </style>
 
 </head>
 <body>
+  <div id="sidebar" class="sidebar">
+    <div id="sidebar-header">
+      <span id="sidebar-title"></span>
+      <button id="sidebar-close">×</button>
+    </div>
+    <div id="sidebar-content"></div>
+  </div>
   <div id="toolbar">
     <button class="downloads-btn" onclick="openDownloadsModal()">
         <i data-lucide="download"></i>
@@ -5367,9 +5572,417 @@ function updateBoardsOrder() {
     saveState(); // Salva a nova ordem
 }
 
-</script>
-<script>
-  lucide.createIcons();
+lucide.createIcons();
+
+const sidebar = document.getElementById('sidebar');
+const sidebarHeader = document.getElementById('sidebar-header');
+const sidebarTitle = document.getElementById('sidebar-title');
+const sidebarContent = document.getElementById('sidebar-content');
+const sidebarClose = document.getElementById('sidebar-close');
+
+function openSidebar(title, contentHtml) {
+  sidebarTitle.textContent = title;
+  sidebarContent.innerHTML = contentHtml;
+  sidebar.classList.add('open');
+}
+
+function closeSidebar() {
+  sidebar.classList.remove('open');
+  sidebarTitle.textContent = '';
+  sidebarContent.innerHTML = '';
+}
+
+sidebarClose.addEventListener('click', closeSidebar);
+
+// Settings Sidebar
+btnSettings.addEventListener('click', () => {
+  openSidebar('Settings', `
+    <div class="form-group">
+      <label for="startPageInputSidebar">StartPage Webview:</label>
+      <input type="text" id="startPageInputSidebar" placeholder="https://example.com" value="${defaultStartPage}" />
+    </div>
+    <div class="form-group">
+      <label for="searchEngineSelectSidebar">Search Engine Default:</label>
+      <select id="searchEngineSelectSidebar">
+        <option value="google" ${defaultSearchEngine==='google'?'selected':''}>Google</option>
+        <option value="duckduckgo" ${defaultSearchEngine==='duckduckgo'?'selected':''}>DuckDuckGo</option>
+        <option value="bing" ${defaultSearchEngine==='bing'?'selected':''}>Bing</option>
+        <option value="chatgpt" ${defaultSearchEngine==='chatgpt'?'selected':''}>ChatGPT</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <button class="modal-button modal-button-secondary" id="btnClearHistorySidebar">Clear Browsing History</button>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-button modal-button-primary" id="btnSaveSettingsSidebar">Save</button>
+    </div>
+  `);
+  document.getElementById('btnClearHistorySidebar').onclick = () => {
+    if (confirm("Are you sure you want to clear the browsing history?")) {
+      browsingHistory = [];
+      localStorage.setItem('browsingHistory', JSON.stringify(browsingHistory));
+      showMessage('Browsing history cleared.');
+    }
+  };
+  document.getElementById('btnSaveSettingsSidebar').onclick = () => {
+    defaultStartPage = document.getElementById('startPageInputSidebar').value.trim() || 'https://www.google.com';
+    defaultSearchEngine = document.getElementById('searchEngineSelectSidebar').value;
+    localStorage.setItem('startPage', defaultStartPage);
+    localStorage.setItem('searchEngine', defaultSearchEngine);
+    closeSidebar();
+  };
+});
+
+// Password Manager Sidebar
+btnCredentials.addEventListener('click', () => {
+  let credsHtml = `<div class="credentials-list">`;
+  if (savedCredentials.length === 0) {
+    credsHtml += '<div class="no-credentials">No saved logins yet.</div>';
+  } else {
+    savedCredentials.forEach((credential, index) => {
+      credsHtml += `
+        <div class="credential-item">
+          <div class="credential-item-info">
+            <strong>${credential.site}</strong><br>
+            <small>${credential.username}</small>
+          </div>
+          <div class="credential-item-actions">
+            <button class="btn-use-credential" data-index="${index}" title="Use this login">Use</button>
+            <button class="btn-delete-credential" data-index="${index}" title="Delete">×</button>
+          </div>
+        </div>
+      `;
+    });
+  }
+  credsHtml += `</div>
+    <div class="form-group">
+      <h4>Add New Login</h4>
+      <div class="credential-form">
+        <input type="text" id="credentialSiteSidebar" placeholder="Website (e.g., reddit.com)" required>
+        <input type="text" id="credentialUsernameSidebar" placeholder="Username or Email" required>
+        <input type="password" id="credentialPasswordSidebar" placeholder="Password" required>
+        <button id="btnSaveCredentialSidebar">Save</button>
+      </div>
+    </div>
+  `;
+  openSidebar('Password Manager', credsHtml);
+  document.querySelectorAll('.btn-use-credential').forEach(btn => {
+    btn.onclick = (e) => {
+      const index = e.target.getAttribute('data-index');
+      useCredential(index);
+      closeSidebar();
+    };
+  });
+  document.querySelectorAll('.btn-delete-credential').forEach(btn => {
+    btn.onclick = (e) => {
+      const index = e.target.getAttribute('data-index');
+      deleteCredential(index);
+      closeSidebar();
+      btnCredentials.click();
+    };
+  });
+  document.getElementById('btnSaveCredentialSidebar').onclick = () => {
+    const site = document.getElementById('credentialSiteSidebar').value.trim();
+    const username = document.getElementById('credentialUsernameSidebar').value.trim();
+    const password = document.getElementById('credentialPasswordSidebar').value.trim();
+    if (!site || !username || !password) {
+      showMessage('Please fill all fields');
+      return;
+    }
+    const existingIndex = savedCredentials.findIndex(c => c.site === site && c.username === username);
+    if (existingIndex >= 0) {
+      savedCredentials[existingIndex].password = password;
+    } else {
+      savedCredentials.push({ site, username, password });
+    }
+    saveCredentials();
+    closeSidebar();
+    btnCredentials.click();
+  };
+});
+
+// History Sidebar
+btnHistory.addEventListener('click', () => {
+  let historyHtml = `<div class="form-group"><input type="text" id="historySearchSidebar" class="form-control" placeholder="Search history..."></div><div class="history-list">`;
+  if (browsingHistory.length === 0) {
+    historyHtml += '<div class="no-history">No browsing history yet.</div>';
+  } else {
+    browsingHistory.forEach(url => {
+      historyHtml += `<div class="history-item" data-url="${url}">${url}</div>`;
+    });
+  }
+  historyHtml += `</div><div class="modal-footer"><button class="modal-button modal-button-secondary" id="btnClearHistorySidebar2">Clear History</button></div>`;
+  openSidebar('Browsing History', historyHtml);
+  document.getElementById('historySearchSidebar').oninput = (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    document.querySelectorAll('.history-item').forEach(item => {
+      item.style.display = item.textContent.toLowerCase().includes(searchTerm) ? 'block' : 'none';
+    });
+  };
+  document.querySelectorAll('.history-item').forEach(item => {
+    item.onclick = () => {
+      createTab(item.dataset.url);
+      closeSidebar();
+    };
+  });
+  document.getElementById('btnClearHistorySidebar2').onclick = () => {
+    if (confirm("Are you sure you want to clear all browsing history?")) {
+      browsingHistory = [];
+      localStorage.setItem('browsingHistory', JSON.stringify(browsingHistory));
+      closeSidebar();
+      btnHistory.click();
+    }
+  };
+});
+
+// Favorites Sidebar
+btnFavorites.addEventListener('click', (e) => {
+  e.stopPropagation();
+  let favHtml = '<div class="favorites-grid">';
+  if (favorites.length === 0) {
+    favHtml += '<div class="no-favorites">No favorites yet. Pin websites using the pin button in webview controls.</div>';
+  } else {
+    favorites.forEach((favorite, index) => {
+      favHtml += `<div class="favorite-item" data-url="${favorite.url}">
+        <img class="favorite-icon" src="https://www.google.com/s2/favicons?domain=${new URL(favorite.url).hostname}" alt="${favorite.title}">
+        <div class="favorite-title">${favorite.title || ''}</div>
+      </div>`;
+    });
+  }
+  favHtml += '</div>';
+  openSidebar('Favorites', favHtml);
+  document.querySelectorAll('.favorite-item').forEach(item => {
+    item.onclick = () => {
+      createTab(item.dataset.url);
+      closeSidebar();
+    };
+  });
+});
+
+// Board Rename Sidebar
+btnRenameBoards.addEventListener('click', () => {
+  let renameHtml = `<div class="form-group">
+    <label for="renameBoardSelectSidebar">Select the Board:</label>
+    <select id="renameBoardSelectSidebar" class="form-control">`;
+  Object.keys(boards).forEach(boardId => {
+    renameHtml += `<option value="${boardId}">${boards[boardId].name}</option>`;
+  });
+  renameHtml += `</select></div>
+    <div class="form-group">
+      <label for="renameBoardInputSidebar">New Name:</label>
+      <input type="text" id="renameBoardInputSidebar" class="form-control" placeholder="Enter new name">
+    </div>
+    <div class="modal-footer">
+      <button class="modal-button modal-button-primary" id="btnSaveRenameSidebar">Save</button>
+    </div>`;
+  openSidebar('Rename Board', renameHtml);
+  const select = document.getElementById('renameBoardSelectSidebar');
+  const input = document.getElementById('renameBoardInputSidebar');
+  select.onchange = () => {
+    input.value = boards[select.value].name;
+  };
+  input.value = boards[select.value].name;
+  document.getElementById('btnSaveRenameSidebar').onclick = () => {
+    const boardId = select.value;
+    const newName = input.value.trim();
+    if (boardId && newName && boards[boardId]) {
+      boards[boardId].name = newName;
+      renderBoardTab(boardId, newName);
+      closeSidebar();
+      saveState();
+    }
+  };
+});
+
+// Board Import Sidebar
+btnImportBoards.addEventListener('click', () => {
+  let importHtml = `<div class="form-group">
+    <label>Select the JSON file:</label>
+    <div class="file-input-container">
+      <div class="file-input-button">Select File</div>
+      <input type="file" id="importFileInputSidebar" class="file-input" accept=".json">
+    </div>
+    <div id="importFileNameSidebar" class="file-name">No selected files</div>
+  </div>
+  <div class="form-group">
+    <label><input type="checkbox" id="importOverwriteCheckboxSidebar"> Replace existing boards?</label>
+  </div>
+  <div class="modal-footer">
+    <button class="modal-button modal-button-primary" id="btnImportConfirmSidebar" disabled>Import</button>
+  </div>`;
+  openSidebar('Import Boards', importHtml);
+  const fileInput = document.getElementById('importFileInputSidebar');
+  const fileName = document.getElementById('importFileNameSidebar');
+  const btnImport = document.getElementById('btnImportConfirmSidebar');
+  fileInput.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      fileName.textContent = file.name;
+      btnImport.disabled = false;
+    } else {
+      fileName.textContent = 'No selected files';
+      btnImport.disabled = true;
+    }
+  };
+  btnImport.onclick = () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const state = JSON.parse(e.target.result);
+        if (document.getElementById('importOverwriteCheckboxSidebar').checked) {
+          Object.keys(boards).forEach(boardId => {
+            closeBoard(boardId);
+          });
+        }
+        boardIdCounter = state.nextBoardId || boardIdCounter;
+        tabIdCounter = state.nextTabId || tabIdCounter;
+        textFieldIdCounter = state.nextTextFieldId || textFieldIdCounter;
+        listIdCounter = state.nextListId || listIdCounter;
+        currentZoom = state.currentZoom || 100;
+        setZoom(currentZoom);
+        if (state.favorites) {
+          favorites = state.favorites;
+          saveFavorites();
+        }
+        if (state.drawingData) {
+          drawingData = state.drawingData;
+          localStorage.setItem('drawingData', JSON.stringify(drawingData));
+        }
+        if (state.boards) {
+          Object.keys(state.boards).forEach(boardId => {
+            const savedBoard = state.boards[boardId];
+            if (!boards[boardId]) {
+              boards[boardId] = {
+                id: boardId,
+                name: savedBoard.name,
+                tabs: [],
+                textFields: [],
+                lists: [],
+                activeTabId: savedBoard.activeTabId,
+                activeTextFieldId: savedBoard.activeTextFieldId,
+                activeListId: savedBoard.activeListId
+              };
+              renderBoardTab(boardId, savedBoard.name);
+            }
+            if (savedBoard.tabs) {
+              savedBoard.tabs.forEach(savedTab => {
+                createTab(savedTab.url, savedTab, boardId);
+              });
+            }
+            if (savedBoard.textFields) {
+              savedBoard.textFields.forEach(savedTextField => {
+                createTextField(savedTextField, boardId);
+              });
+            }
+            if (savedBoard.lists) {
+              savedBoard.lists.forEach(savedList => {
+                createList(savedList, boardId);
+              });
+            }
+          });
+        }
+        if (state.currentBoardId && boards[state.currentBoardId]) {
+          switchBoard(state.currentBoardId, true);
+        }
+        closeSidebar();
+        saveState();
+      } catch (error) {
+        showMessage("Error in import file: " + error.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+});
+
+// Board Export Sidebar
+btnExportBoards.addEventListener('click', () => {
+  let exportHtml = `<div class="form-group">
+    <button class="modal-button modal-button-primary" id="btnExportBoardsSidebar">Export Boards as JSON</button>
+  </div>`;
+  openSidebar('Export Boards', exportHtml);
+  document.getElementById('btnExportBoardsSidebar').onclick = () => {
+    exportBoards();
+    closeSidebar();
+  };
+});
+
+// Theme Color Sidebar
+ctxChangeTheme.addEventListener('click', () => {
+  let themeHtml = `<div id="color-picker-container-sidebar">
+    <input type="color" id="themeColorInputSidebar" value="${currentThemeColor}">
+    <div id="selected-color-preview-sidebar" style="width:100%;height:40px;background:${currentThemeColor};margin-top:10px;"></div>
+    <div class="form-group" style="margin-top: 15px;">
+      <label for="theme-color-hex-sidebar">HEX:</label>
+      <input type="text" id="theme-color-hex-sidebar" value="${currentThemeColor}" readonly>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-button modal-button-secondary" id="btnResetThemeColorSidebar">Reset to Default</button>
+      <button class="modal-button modal-button-primary" id="btnSaveThemeColorSidebar">Apply</button>
+    </div>
+  </div>`;
+  openSidebar('Theme Color', themeHtml);
+  const colorInput = document.getElementById('themeColorInputSidebar');
+  const hexInput = document.getElementById('theme-color-hex-sidebar');
+  const preview = document.getElementById('selected-color-preview-sidebar');
+  colorInput.oninput = () => {
+    hexInput.value = colorInput.value;
+    preview.style.background = colorInput.value;
+  };
+  document.getElementById('btnResetThemeColorSidebar').onclick = () => {
+    colorInput.value = '#007acc';
+    hexInput.value = '#007acc';
+    preview.style.background = '#007acc';
+  };
+  document.getElementById('btnSaveThemeColorSidebar').onclick = () => {
+    const newColor = colorInput.value;
+    if (/^#[0-9A-Fa-f]{6}$/.test(newColor)) {
+      currentThemeColor = newColor;
+      localStorage.setItem('themeColor', newColor);
+      applyThemeColor();
+      closeSidebar();
+    } else {
+      showMessage('Please select a valid color.');
+    }
+  };
+  contextMenu.style.display = 'none';
+});
+
+[...document.querySelectorAll('.modal-overlay')].forEach(e => e.remove());
+
+function openDownloadsSidebar() {
+  let html = `<div class='downloads-list' id='downloadsListSidebar'></div><div class='modal-footer'><button class='modal-button' id='clearDownloadsSidebar'>Clear</button></div>`;
+  openSidebar('Downloads', html);
+  loadDownloadsSidebar();
+  document.getElementById('clearDownloadsSidebar').onclick = clearDownloads;
+}
+async function loadDownloadsSidebar() {
+  try {
+    const downloads = await ipcRenderer.invoke('get-completed-downloads');
+    const downloadsList = document.getElementById('downloadsListSidebar');
+    if (!downloadsList) return;
+    if (downloads.length === 0) {
+      downloadsList.innerHTML = `<div class='no-favorites'>No downloads have finished yet.</div>`;
+      return;
+    }
+    downloadsList.innerHTML = downloads.map(download => `
+      <div class='download-item' style='display:flex;align-items:center;justify-content:space-between;padding:12px 10px;background:transparent;border-radius:0;min-height:48px;'>
+        <div style='flex:1;'>
+          <div style='color:#fff;font-weight:bold;'>${download.fileName}</div>
+          <div style='color:#aaa;font-size:12px;'>${download.completedAt} • ${formatFileSize(download.size)}</div>
+        </div>
+        <div style='color:#4caf50;font-size:18px;margin-left:10px;'>✓</div>
+      </div>
+    `).join('');
+  } catch (error) {
+    const downloadsList = document.getElementById('downloadsListSidebar');
+    if (downloadsList) downloadsList.innerHTML = `<div class='no-favorites'>Error loading downloads.</div>`;
+  }
+}
+
+const downloadsBtn = document.querySelector('.downloads-btn');
+downloadsBtn.onclick = openDownloadsSidebar;
 </script>
 </body>
 </html>
