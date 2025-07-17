@@ -1339,6 +1339,28 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
             background-color: #219a52;
         }
 
+        .download-progress {
+            width: 100px;
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-left: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 100%;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #27ae60;
+            transition: width 0.2s ease-in-out;
+        }
+
         .clear-btn {
             background-color: #e74c3c;
             color: white;
@@ -1651,7 +1673,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     <div id="sidebar-content"></div>
   </div>
   <div id="toolbar">
-    <button class="downloads-btn" onclick="openDownloadsModal()">
+    <button class="downloads-btn" onclick="openDownloadsSidebar()">
         <i data-lucide="download"></i>
         <span class="downloads-badge" id="downloadsBadge">0</span>
     </button>
@@ -2365,12 +2387,11 @@ function formatFileSize(bytes) {
 
 function updateDownloadsBadge() {
     const badge = document.getElementById('downloadsBadge');
-    // Mudança: Badge mostra apenas downloads concluídos
-    const totalDownloads = completedDownloadsCount;
+    const totalDownloads = completedDownloadsCount + activeDownloads.size;
     
     if (totalDownloads > 0) {
         badge.textContent = totalDownloads;
-        badge.style.display = 'inline-block';
+        badge.style.display = 'inline-flex';
     } else {
         badge.style.display = 'none';
     }
@@ -2378,7 +2399,7 @@ function updateDownloadsBadge() {
 
 ipcRenderer.on('download-started', (event, downloadInfo) => {
     activeDownloads.set(downloadInfo.id, downloadInfo);
-    // Removido: updateDownloadsBadge() - não atualiza badge para downloads ativos
+    updateDownloadsBadge();
     
     // Se o modal estiver aberto, atualiza a exibição
     if (document.getElementById('downloadsModal').style.display === 'block') {
@@ -2410,13 +2431,17 @@ ipcRenderer.on('download-progress', (event, progressInfo) => {
                 progressFill.style.width = `${progressInfo.progress}%`;
             }
         }
+
+        if (sidebar.classList.contains('open') && sidebarTitle.textContent === 'Downloads') {
+            loadDownloadsSidebar();
+        }
     }
 });
 
 // Listener para download removido (concluído ou interrompido)
 ipcRenderer.on('download-removed', (event, downloadId) => {
     activeDownloads.delete(downloadId);
-    // Removido: updateDownloadsBadge() - não atualiza badge quando remove ativo
+    updateDownloadsBadge();
     
     // Remove o elemento do DOM se o modal estiver aberto
     const downloadElement = document.getElementById(`download-${downloadId}`);
@@ -2433,6 +2458,9 @@ ipcRenderer.on('download-completed', (event, downloadInfo) => {
     // Se o modal estiver aberto, recarrega os downloads
     if (document.getElementById('downloadsModal').style.display === 'block') {
         loadDownloads();
+    }
+    if (sidebar.classList.contains('open') && sidebarTitle.textContent === 'Downloads') {
+        loadDownloadsSidebar();
     }
 });
 
@@ -5959,14 +5987,33 @@ function openDownloadsSidebar() {
 }
 async function loadDownloadsSidebar() {
   try {
-    const downloads = await ipcRenderer.invoke('get-completed-downloads');
+    // Carrega downloads ativos e concluídos
+    const completedDownloads = await ipcRenderer.invoke('get-completed-downloads');
+    const activeDownloadsArray = Array.from(activeDownloads.values());
+
     const downloadsList = document.getElementById('downloadsListSidebar');
     if (!downloadsList) return;
-    if (downloads.length === 0) {
+
+    if (completedDownloads.length === 0 && activeDownloadsArray.length === 0) {
       downloadsList.innerHTML = `<div class='no-favorites'>No downloads have finished yet.</div>`;
       return;
     }
-    downloadsList.innerHTML = downloads.map(download => `
+
+    const activeHtml = activeDownloadsArray.map(download => `
+      <div class='download-item' style='display:flex;align-items:center;justify-content:space-between;padding:12px 10px;background:transparent;border-radius:0;min-height:48px;' id="download-${download.id}">
+        <div style='flex:1;'>
+          <div style='color:#fff;font-weight:bold;'>${download.fileName}</div>
+          <div class='download-details' style='color:#aaa;font-size:12px;'>
+            ${formatFileSize(download.receivedBytes)} / ${formatFileSize(download.totalBytes)} • ${download.progress.toFixed(1)}%
+          </div>
+        </div>
+        <div class="download-progress" style="width:100px;height:8px;background-color:#555;border-radius:4px;overflow:hidden;margin-left:10px;">
+          <div class="progress-fill" style="width: ${download.progress}%; height:100%; background-color: var(--theme-color);"></div>
+        </div>
+      </div>
+    `).join('');
+
+    const completedHtml = completedDownloads.map(download => `
       <div class='download-item' style='display:flex;align-items:center;justify-content:space-between;padding:12px 10px;background:transparent;border-radius:0;min-height:48px;'>
         <div style='flex:1;'>
           <div style='color:#fff;font-weight:bold;'>${download.fileName}</div>
@@ -5975,7 +6022,10 @@ async function loadDownloadsSidebar() {
         <div style='color:#4caf50;font-size:18px;margin-left:10px;'>✓</div>
       </div>
     `).join('');
+
+    downloadsList.innerHTML = activeHtml + completedHtml;
   } catch (error) {
+    console.error('Error loading sidebar downloads:', error);
     const downloadsList = document.getElementById('downloadsListSidebar');
     if (downloadsList) downloadsList.innerHTML = `<div class='no-favorites'>Error loading downloads.</div>`;
   }
