@@ -608,6 +608,20 @@ webview, iframe {
     display: none;
 }
 
+.modal-disabled {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100000;
+    display: none;
+}
+
 .modal-content {
     background: #333;
     padding: 20px;
@@ -1661,6 +1675,130 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
   background: #666;
 }
 .downloads-modal { display: none !important; }
+
+
+/* Estilos para o modal do gerador de senhas */
+#passwordGeneratorModal .modal {
+    background: #333;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+#passwordGeneratorModal .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+    padding: 15px;
+    background: #2a2a2a;
+    border-radius: 6px;
+    border: 1px solid #444;
+}
+
+#passwordGeneratorModal .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#passwordGeneratorModal .checkbox-item:hover {
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+    padding: 8px 8px;
+}
+
+#passwordGeneratorModal .checkbox-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #007acc;
+}
+
+#passwordGeneratorModal .checkbox-item label {
+    color: #e0e0e0;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+    flex: 1;
+}
+
+#passwordGeneratorModal .generate-btn {
+    background: #007acc;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 15px;
+    width: 100%;
+}
+
+#passwordGeneratorModal .password-result {
+    margin-top: 20px;
+}
+
+#passwordGeneratorModal .password-display {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+#passwordGeneratorModal .password-input {
+    flex: 1;
+    padding: 8px;
+    background: #222;
+    border: 1px solid #444;
+    color: white;
+    border-radius: 4px;
+}
+
+#passwordGeneratorModal .copy-btn {
+    background: #444;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#passwordGeneratorModal .copy-success {
+    color: #4CAF50;
+    display: none;
+    text-align: center;
+}
+
+#passwordGeneratorModal .error-message {
+    color: #e74c3c;
+    text-align: center;
+    margin-top: 10px;
+    display: none;
+}
+
+#passwordGeneratorModal .slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#passwordGeneratorModal .slider {
+    flex: 1;
+}
+
+#passwordGeneratorModal .slider-value {
+    min-width: 30px;
+    text-align: center;
+}
+
+#lengthValue{
+    color: white;
+}
+
 </style>
 
 </head>
@@ -1683,6 +1821,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
       <button id="btnExportBoards">📤 Export Boards</button>
       <button id="btnImportBoards">📥 Import Boards</button>
       <button id="btnHistory">🕒 History</button>
+      <button id="btnPasswordsGenerator">🔐 Password Generator</button>
       <button id="btnRenameBoards">✏️ Rename Boards</button>
       <button id="btnSettings">⚙️ Settings</button>
     </div>
@@ -1734,8 +1873,67 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     <button id="reset-zoom">⟲</button>
   </div>
 
+
+  <div class="modal-overlay" id="passwordGeneratorModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Password Generator</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label>Password length:</label>
+                <div class="slider-container">
+                    <input type="range" min="4" max="50" value="12" class="slider" id="lengthSlider">
+                    <div class="slider-value" id="lengthValue">12</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Incluir:</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="lowercase" checked>
+                        <label for="lowercase">Lowercase letters (a-z)</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="uppercase" checked>
+                        <label for="uppercase">Capital letters (A-Z)</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="numbers" checked>
+                        <label for="numbers">Numbers (0-9)</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="special" checked>
+                        <label for="special">Special characters (!@#$%^&*)</label>
+                    </div>
+                </div>
+            </div>
+
+            <button class="generate-btn" onclick="generatePassword()">
+                🔄 Generate Password
+            </button>
+
+            <div class="password-result" id="passwordResult">
+                <div class="password-display">
+                    <input type="text" class="password-input" id="passwordInput" readonly>
+                    <button class="copy-btn" onclick="copyPassword()">📋</button>
+                </div>
+                <div class="copy-success" id="copySuccess">
+                    ✅ Password copied successfully!
+                </div>
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                ⚠️ Select at least one option!
+            </div>
+        </div>
+    </div>
+</div>
+
   <!-- Credentials Modal -->
-<div class="modal-overlay" id="credentialsModal">
+<div class="modal-disabled" id="credentialsModal">
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title">Saved Logins</h3>
@@ -1775,7 +1973,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     </div>
 
   <!-- Modal para renomear boards -->
-  <div class="modal-overlay" id="renameModal">
+  <div class="modal-disabled" id="renameModal">
     <div class="modal-content">
       <div class="modal-header">
         <h3 class="modal-title">Rename Board</h3>
@@ -1806,7 +2004,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
   </div>
 
   <!-- Modal para histórico -->
-<div class="modal-overlay" id="historyModal">
+<div class="modal-disabled" id="historyModal">
     <div class="modal-content">
         <div class="modal-header">
             <h3 class="modal-title">Browsing History</h3>
@@ -1827,7 +2025,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
 </div>
 
 <!-- Modal para seleção de cor de tema -->
-<div class="modal-overlay" id="themeColorModal">
+<div class="modal-disabled" id="themeColorModal">
     <div class="modal-content" style="max-width: 300px;">
         <div class="modal-header">
             <h3 class="modal-title">Select Theme Color</h3>
@@ -1853,7 +2051,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
 </div>
 
   <!-- Modal para configurações -->
-  <div class="modal-overlay" id="settingsModal">
+  <div class="modal-disabled" id="settingsModal">
   <div class="modal-content">
     <div class="modal-header">
       <h3 class="modal-title">Settings</h3>
@@ -1889,7 +2087,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
 </div>
 
   <!-- Modal para importar boards -->
-  <div class="modal-overlay" id="importModal">
+  <div class="modal-disabled" id="importModal">
     <div class="modal-content">
       <div class="modal-header">
         <h3 class="modal-title">Import Boards</h3>
@@ -1918,7 +2116,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
   </div>
 
   <!-- Modal de favoritos -->
-  <div class="modal-overlay" id="favoritesModal">
+  <div class="modal-disabled" id="favoritesModal">
     <div class="modal-content" id="favorites-modal">
       <div class="modal-header">
         <h3 class="modal-title">Favorites</h3>
@@ -2009,15 +2207,181 @@ const credentialUsernameInput = document.getElementById('credentialUsername');
 const credentialPasswordInput = document.getElementById('credentialPassword');
 const btnSaveCredential = document.getElementById('btnSaveCredential');
 
+const btnPasswordsGenerator = document.getElementById("btnPasswordsGenerator");
+const passwordGeneratorModal = document.getElementById("passwordGeneratorModal");
+
 const btnCredentials = document.createElement('button');
 btnCredentials.id = 'btnCredentials';
 btnCredentials.innerHTML = '🔑 Saved Logins';
 moreOptionsMenu.insertBefore(btnCredentials, btnRenameBoards);
 
+if (btnPasswordsGenerator) {
+    btnPasswordsGenerator.addEventListener('click', (e) => {
+        e.preventDefault();
+        showPasswordsGeneratorModal();
+        // Fechar o menu de mais opções se estiver aberto
+        if (moreOptionsMenu) {
+            moreOptionsMenu.style.display = 'none';
+        }
+    });
+}
+
 btnCredentials.addEventListener('click', () => {
     showCredentialsModal();
     moreOptionsMenu.style.display = 'none';
 });
+
+function showPasswordsGeneratorModal() {
+    const modal = document.getElementById('passwordGeneratorModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        // Resetar valores para padrão
+        document.getElementById('lengthSlider').value = 12;
+        document.getElementById('lengthValue').textContent = '12';
+        document.getElementById('passwordInput').value = '';
+        document.getElementById('copySuccess').style.display = 'none';
+        document.getElementById('errorMessage').style.display = 'none';
+    }
+}
+
+
+function generatePassword() {
+    const length = parseInt(document.getElementById('lengthSlider').value);
+    const lowercase = document.getElementById('lowercase').checked;
+    const uppercase = document.getElementById('uppercase').checked;
+    const numbers = document.getElementById('numbers').checked;
+    const special = document.getElementById('special').checked;
+    
+    const errorMessage = document.getElementById('errorMessage');
+    const passwordInput = document.getElementById('passwordInput');
+    
+    // Esconder mensagem de erro
+    errorMessage.style.display = 'none';
+    
+    // Verificar se pelo menos uma opção foi selecionada
+    if (!lowercase && !uppercase && !numbers && !special) {
+        errorMessage.style.display = 'block';
+        return;
+    }
+    
+    // Criar conjunto de caracteres
+    let charset = '';
+    if (lowercase) charset += 'abcdefghijklmnopqrstuvwxyz';
+    if (uppercase) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    if (numbers) charset += '0123456789';
+    if (special) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
+    
+    // Gerar senha
+    let password = '';
+    for (let i = 0; i < length; i++) {
+        password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    
+    passwordInput.value = password;
+}
+
+function copyPassword() {
+    const passwordInput = document.getElementById('passwordInput');
+    const copySuccess = document.getElementById('copySuccess');
+    
+    if (passwordInput.value) {
+        // Método moderno para copiar
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(passwordInput.value).then(() => {
+                showCopySuccess();
+            }).catch(() => {
+                // Fallback para método antigo
+                fallbackCopyTextToClipboard(passwordInput.value);
+            });
+        } else {
+            // Fallback para navegadores mais antigos
+            fallbackCopyTextToClipboard(passwordInput.value);
+        }
+    }
+}
+
+function fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        showCopySuccess();
+    } catch (err) {
+        console.error('Erro ao copiar: ', err);
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+function showCopySuccess() {
+    const copySuccess = document.getElementById('copySuccess');
+    copySuccess.style.display = 'block';
+    setTimeout(() => {
+        copySuccess.style.display = 'none';
+    }, 2000);
+}
+document.addEventListener('DOMContentLoaded', function() {
+    // Slider de comprimento
+    const lengthSlider = document.getElementById('lengthSlider');
+    const lengthValue = document.getElementById('lengthValue');
+    
+    if (lengthSlider && lengthValue) {
+        lengthSlider.addEventListener('input', function() {
+            lengthValue.textContent = this.value;
+        });
+    }
+    
+    // Fechar modal
+    const closeModalBtn = document.querySelector('#passwordGeneratorModal .close-modal');
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', function() {
+            passwordGeneratorModal.style.display = 'none';
+        });
+    }
+    
+    // Fechar modal clicando fora
+    if (passwordGeneratorModal) {
+        passwordGeneratorModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        });
+    }
+    
+    // Botão de gerar senha
+    const generateBtn = document.querySelector('#passwordGeneratorModal .generate-btn');
+    if (generateBtn) {
+        generateBtn.addEventListener('click', generatePassword);
+    }
+    
+    // Botão de copiar
+    const copyBtn = document.querySelector('#passwordGeneratorModal .copy-btn');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', copyPassword);
+    }
+
+    
+});
+
+function checkModalStyles() {
+    const modal = document.getElementById('passwordGeneratorModal');
+    if (modal) {
+        const styles = window.getComputedStyle(modal);
+        console.log('Modal display:', styles.display);
+        console.log('Modal position:', styles.position);
+        console.log('Modal z-index:', styles.zIndex);
+    }
+}
+
+
+
 
 function showCredentialsModal() {
     updateCredentialsList();
@@ -5686,7 +6050,7 @@ btnCredentials.addEventListener('click', () => {
     <div class="form-group">
       <h4>Add New Login</h4>
       <div class="credential-form">
-        <input type="text" id="credentialSiteSidebar" placeholder="Website (e.g., reddit.com)" required>
+        <input type="text" id="credentialSiteSidebar" placeholder="Website (e.g., facebook.com)" required>
         <input type="text" id="credentialUsernameSidebar" placeholder="Username or Email" required>
         <input type="password" id="credentialPasswordSidebar" placeholder="Password" required>
         <button id="btnSaveCredentialSidebar">Save</button>
@@ -5709,6 +6073,8 @@ btnCredentials.addEventListener('click', () => {
       btnCredentials.click();
     };
   });
+
+
   document.getElementById('btnSaveCredentialSidebar').onclick = () => {
     const site = document.getElementById('credentialSiteSidebar').value.trim();
     const username = document.getElementById('credentialUsernameSidebar').value.trim();
@@ -5977,7 +6343,7 @@ ctxChangeTheme.addEventListener('click', () => {
   contextMenu.style.display = 'none';
 });
 
-[...document.querySelectorAll('.modal-overlay')].forEach(e => e.remove());
+[...document.querySelectorAll('.modal-disabled')].forEach(e => e.remove());
 
 function openDownloadsSidebar() {
   let html = `<div class='downloads-list' id='downloadsListSidebar'></div><div class='modal-footer'><button class='modal-button' id='clearDownloadsSidebar'>Clear</button></div>`;
