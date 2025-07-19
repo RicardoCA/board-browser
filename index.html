@@ -2303,20 +2303,23 @@ function copyPassword() {
 function fallbackCopyTextToClipboard(text) {
     const textArea = document.createElement("textarea");
     textArea.value = text;
-    textArea.style.position = "fixed";
-    textArea.style.left = "-999999px";
-    textArea.style.top = "-999999px";
+    textArea.style.position = "fixed";  // Evita rolagem para o elemento
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-    
+
     try {
-        document.execCommand('copy');
-        showCopySuccess();
+        const successful = document.execCommand('copy');
+        if (successful) {
+            console.log('Fallback copy succeeded');
+            window.postMessage({ type: 'copyCompleted' }, '*');
+        } else {
+            console.error('Fallback copy failed');
+        }
     } catch (err) {
-        console.error('Erro ao copiar: ', err);
+        console.error('Fallback copy error:', err);
     }
-    
+
     document.body.removeChild(textArea);
 }
 
@@ -4521,34 +4524,37 @@ btnAdBlocker.addEventListener('click', (e) => {
 
                     // Define o novo handler
                     function copyModeHandler(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
 
-                        let textToCopy = '';
-                        if (e.target.href) {
-                            textToCopy = e.target.href;
-                            alert('URL Copied: ' + textToCopy);
-                        } else if (e.target.src) {
-                            textToCopy = e.target.src;
-                            alert('URL Copied: ' + textToCopy);
-                        } else {
-                            const selection = window.getSelection();
-                            if (selection && selection.toString().trim() !== '') {
-                                textToCopy = selection.toString();
-                                alert('Text Copied: ' + textToCopy);
-                            } else {
-                                return; // Não copia se não há conteúdo selecionado
-                            }
-                        }
+    let textToCopy = '';
+    if (e.target.href) {
+        textToCopy = e.target.href;
+    } else if (e.target.src) {
+        textToCopy = e.target.src;
+    } else {
+        const selection = window.getSelection();
+        if (selection && selection.toString().trim() !== '') {
+            textToCopy = selection.toString();
+        } else {
+            return;
+        }
+    }
 
-                        navigator.clipboard.writeText(textToCopy).then(() => {
-                            console.log('Copied to clipboard:', textToCopy);
-                            // Notifica o modo que uma cópia foi realizada
-                            window.postMessage({ type: 'copyCompleted' }, '*');
-                        }).catch(err => {
-                            console.error('Failed to copy:', err);
-                        });
-                    }
+    // Método moderno com fallback
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            console.log('Copied to clipboard:', textToCopy);
+            window.postMessage({ type: 'copyCompleted' }, '*');
+        }).catch(err => {
+            // Fallback para método antigo se o moderno falhar
+            fallbackCopyTextToClipboard(textToCopy);
+        });
+    } else {
+        fallbackCopyTextToClipboard(textToCopy);
+    }
+}
+
 
                     // Armazena o handler globalmente e adiciona o listener
                     window.copyModeHandler = copyModeHandler;
