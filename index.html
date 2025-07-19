@@ -2206,11 +2206,14 @@ const btnSaveCredential = document.getElementById('btnSaveCredential');
 
 const btnPasswordsGenerator = document.getElementById("btnPasswordsGenerator");
 const passwordGeneratorModal = document.getElementById("passwordGeneratorModal");
-
 const btnCredentials = document.createElement('button');
 btnCredentials.id = 'btnCredentials';
 btnCredentials.innerHTML = '🔑 Saved Logins';
 moreOptionsMenu.insertBefore(btnCredentials, btnRenameBoards);
+
+
+
+
 
 function showConfirm(message) {
     return new Promise((resolve) => {
@@ -2396,6 +2399,7 @@ function showPasswordsGeneratorModal() {
 }
 
 
+
 function generatePassword() {
     const length = parseInt(document.getElementById('lengthSlider').value);
     const lowercase = document.getElementById('lowercase').checked;
@@ -2561,6 +2565,7 @@ function updateCredentialsList() {
             </div>
             <div class="credential-item-actions">
                 <button class="btn-use-credential" data-index="${index}" title="Use this login">Use</button>
+                <button class="btn-show-credential" data-index="${index}" title="Show">Show</button>
                 <button class="btn-delete-credential" data-index="${index}" title="Delete">×</button>
             </div>
         `;
@@ -6254,6 +6259,7 @@ btnCredentials.addEventListener('click', () => {
           </div>
           <div class="credential-item-actions">
             <button class="btn-use-credential" data-index="${index}" title="Use this login">Use</button>
+            <button class="btn-show-credential" data-index="${index}" title="Show">Show</button>
             <button class="btn-delete-credential" data-index="${index}" title="Delete">×</button>
           </div>
         </div>
@@ -6272,6 +6278,68 @@ btnCredentials.addEventListener('click', () => {
     </div>
   `;
   openSidebar('Password Manager', credsHtml);
+
+  document.querySelectorAll(".btn-show-credential").forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        const index = e.target.getAttribute('data-index');
+        const credential = savedCredentials[index];
+        if (credential) {
+            // Create a modal to show the credential details
+            const modal = document.createElement('div');
+            modal.style.position = 'fixed';
+            modal.style.top = '50%';
+            modal.style.left = '50%';
+            modal.style.transform = 'translate(-50%, -50%)';
+            modal.style.background = '#333';
+            modal.style.color = 'white';
+            modal.style.padding = '20px';
+            modal.style.borderRadius = '8px';
+            modal.style.zIndex = '100001';
+            modal.style.width = '300px';
+            modal.style.boxShadow = '0 0 20px rgba(0,0,0,0.5)';
+            
+            modal.innerHTML = `
+                <div style="margin-bottom: 15px;">
+                    <h3 style="margin-top: 0; color: var(--theme-color);">Login Details</h3>
+                    <p><strong>Site:</strong> ${credential.site}</p>
+                    <p><strong>Username:</strong> ${credential.username}</p>
+                    <p><strong>Password:</strong> <span id="passwordDisplay">••••••••</span></p>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <button id="showPasswordBtn" style="padding: 8px 12px; background: #007acc; color: white; border: none; border-radius: 4px; cursor: pointer;">Show Password</button>
+                    <button id="closeCredentialModal" style="padding: 8px 12px; background: #555; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Show password functionality
+            const showPasswordBtn = modal.querySelector('#showPasswordBtn');
+            const passwordDisplay = modal.querySelector('#passwordDisplay');
+            let passwordVisible = false;
+            
+            showPasswordBtn.addEventListener('click', () => {
+                passwordVisible = !passwordVisible;
+                passwordDisplay.textContent = passwordVisible ? credential.password : '••••••••';
+                showPasswordBtn.textContent = passwordVisible ? 'Hide Password' : 'Show Password';
+            });
+            
+            // Close modal
+            modal.querySelector('#closeCredentialModal').addEventListener('click', () => {
+                modal.remove();
+            });
+            
+            // Close when clicking outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+    });
+});
+
+
   document.querySelectorAll('.btn-use-credential').forEach(btn => {
     btn.onclick = (e) => {
       const index = e.target.getAttribute('data-index');
