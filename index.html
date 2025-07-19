@@ -757,7 +757,7 @@ transform: translateX(-50%);
 background: rgba(51, 51, 51, 0.8);
 padding: 8px 15px;
 border-radius: 20px 20px 0 0;
-display: flex;
+display: none;
 align-items: center;
 gap: 10px;
 z-index: 1000;
@@ -766,16 +766,10 @@ transition: bottom 0.3s ease;
 
 #zoom-controls.visible {
 bottom: 0;
+display: flex;
 }
 
-#zoom-area-trigger {
-position: fixed;
-bottom: 0;
-left: 0;
-right: 0;
-height: 20px;
-z-index: 999;
-}
+
 
 #zoom-controls button {
 background: #555;
@@ -2001,6 +1995,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     <button id="ctx-create-textfield">📝 Text field</button>
     <button id="ctx-create-list">📋 List</button>
     <button id="ctx-change-theme">🎨 Change Theme Color</button>
+    <button id="ctx-zoom">🔍 Zoom</button>
   </div>
 
   <!-- Modal para histórico -->
@@ -2195,8 +2190,10 @@ const ctxCreateTextField = document.getElementById('ctx-create-textfield');
 const ctxCreateList = document.getElementById('ctx-create-list');
 const ctxChangeTheme = document.getElementById("ctx-change-theme");
 const ctxResetTheme = document.getElementById("btnResetThemeColor");
+const ctxZoom = document.getElementById("ctx-zoom");
 
 var isCopyModeActive = false;
+var isZoomEnable = false;
 let currentThemeColor = localStorage.getItem('themeColor') || '#007acc';
 
 let savedCredentials = JSON.parse(localStorage.getItem('savedCredentials')) || [];
@@ -2214,6 +2211,21 @@ const btnCredentials = document.createElement('button');
 btnCredentials.id = 'btnCredentials';
 btnCredentials.innerHTML = '🔑 Saved Logins';
 moreOptionsMenu.insertBefore(btnCredentials, btnRenameBoards);
+
+ctxZoom.addEventListener('click',function(){
+    if(isZoomEnable == false){
+        isZoomEnable = true;
+        zoomControls.classList.add('visible');
+    }
+    else{
+        isZoomEnable = false;
+        zoomControls.classList.remove('visible');
+    }
+});
+
+
+
+
 
 if (btnPasswordsGenerator) {
     btnPasswordsGenerator.addEventListener('click', (e) => {
@@ -3147,8 +3159,36 @@ btnHistory.addEventListener('click', () => {
 
 function showHistoryModal() {
     updateHistoryList();
-    historyModal.style.display = 'flex';
-    historySearch.focus();
+    let historyHtml = `<div class="form-group"><input type="text" id="historySearchSidebar" class="form-control" placeholder="Search history..."></div><div class="history-list">`;
+  if (browsingHistory.length === 0) {
+    historyHtml += '<div class="no-history">No browsing history yet.</div>';
+  } else {
+    browsingHistory.forEach(url => {
+      historyHtml += `<div class="history-item" data-url="${url}">${url}</div>`;
+    });
+  }
+  historyHtml += `</div><div class="modal-footer"><button class="modal-button modal-button-secondary" id="btnClearHistorySidebar2">Clear History</button></div>`;
+  openSidebar('Browsing History', historyHtml);
+  document.getElementById('historySearchSidebar').oninput = (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    document.querySelectorAll('.history-item').forEach(item => {
+      item.style.display = item.textContent.toLowerCase().includes(searchTerm) ? 'block' : 'none';
+    });
+  };
+  document.querySelectorAll('.history-item').forEach(item => {
+    item.onclick = () => {
+      createTab(item.dataset.url);
+      closeSidebar();
+    };
+  });
+  document.getElementById('btnClearHistorySidebar2').onclick = () => {
+    if (confirm("Are you sure you want to clear all browsing history?")) {
+      browsingHistory = [];
+      localStorage.setItem('browsingHistory', JSON.stringify(browsingHistory));
+      closeSidebar();
+      btnHistory.click();
+    }
+  };
 }
 
 function updateHistoryList() {
@@ -3544,13 +3584,7 @@ resetZoomBtn.addEventListener('click', () => {
     setZoom(100);
 });
 
-zoomAreaTrigger.addEventListener('mouseenter', () => {
-    zoomControls.classList.add('visible');
-});
 
-zoomControls.addEventListener('mouseleave', () => {
-    zoomControls.classList.remove('visible');
-});
 
 // Botão de favoritos
 btnFavorites.addEventListener('click', (e) => {
@@ -3781,19 +3815,37 @@ function showImportModal() {
 
 // Função para mostrar o modal de renomear
 function showRenameModal() {
-    renameBoardSelect.innerHTML = '';
-    Object.keys(boards).forEach(boardId => {
-        const option = document.createElement('option');
-        option.value = boardId;
-        option.textContent = boards[boardId].name;
-        renameBoardSelect.appendChild(option);
-    });
-
-    if (renameBoardSelect.options.length > 0) {
-        renameBoardInput.value = boards[renameBoardSelect.value].name;
+    let renameHtml = `<div class="form-group">
+    <label for="renameBoardSelectSidebar">Select the Board:</label>
+    <select id="renameBoardSelectSidebar" class="form-control">`;
+  Object.keys(boards).forEach(boardId => {
+    renameHtml += `<option value="${boardId}">${boards[boardId].name}</option>`;
+  });
+  renameHtml += `</select></div>
+    <div class="form-group">
+      <label for="renameBoardInputSidebar">New Name:</label>
+      <input type="text" id="renameBoardInputSidebar" class="form-control" placeholder="Enter new name">
+    </div>
+    <div class="modal-footer">
+      <button class="modal-button modal-button-primary" id="btnSaveRenameSidebar">Save</button>
+    </div>`;
+  openSidebar('Rename Board', renameHtml);
+  const select = document.getElementById('renameBoardSelectSidebar');
+  const input = document.getElementById('renameBoardInputSidebar');
+  select.onchange = () => {
+    input.value = boards[select.value].name;
+  };
+  input.value = boards[select.value].name;
+  document.getElementById('btnSaveRenameSidebar').onclick = () => {
+    const boardId = select.value;
+    const newName = input.value.trim();
+    if (boardId && newName && boards[boardId]) {
+      boards[boardId].name = newName;
+      renderBoardTab(boardId, newName);
+      closeSidebar();
+      saveState();
     }
-
-    renameModal.style.display = 'flex';
+  };
 }
 
 // Event listener para seleção de arquivo de importação
@@ -5888,6 +5940,10 @@ document.addEventListener('keydown', (e) => {
         e.preventDefault();
         showHistoryModal();
         moreOptionsMenu.style.display = 'none';
+    }
+    else if(e.ctrlKey && e.key === 'g'){
+        e.preventDefault();
+        showPasswordsGeneratorModal();
     }
     if (e.key === 'F12') {
         // Encontra todos os webviews e abre o DevTools para o que está em foco
