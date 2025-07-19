@@ -2212,7 +2212,148 @@ btnCredentials.id = 'btnCredentials';
 btnCredentials.innerHTML = '🔑 Saved Logins';
 moreOptionsMenu.insertBefore(btnCredentials, btnRenameBoards);
 
+function showConfirm(message) {
+    return new Promise((resolve) => {
+        // Criar overlay de fundo
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        overlay.style.zIndex = '99999';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+
+        // Criar modal
+        const modal = document.createElement('div');
+        modal.style.background = '#333';
+        modal.style.color = 'white';
+        modal.style.padding = '30px';
+        modal.style.borderRadius = '12px';
+        modal.style.minWidth = '300px';
+        modal.style.maxWidth = '500px';
+        modal.style.textAlign = 'center';
+        modal.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.3)';
+        modal.style.animation = 'modalFadeIn 0.2s ease-out';
+
+        // Adicionar CSS da animação
+        if (!document.getElementById('modal-styles')) {
+            const style = document.createElement('style');
+            style.id = 'modal-styles';
+            style.textContent = `
+                @keyframes modalFadeIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.9);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Texto da mensagem
+        const messageElement = document.createElement('p');
+        messageElement.style.margin = '0 0 25px 0';
+        messageElement.style.fontSize = '16px';
+        messageElement.style.lineHeight = '1.5';
+        messageElement.innerText = message;
+
+        // Container dos botões
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.gap = '15px';
+        buttonContainer.style.justifyContent = 'center';
+
+        // Botão Cancelar
+        const cancelButton = document.createElement('button');
+        cancelButton.innerText = 'Cancel';
+        cancelButton.style.padding = '12px 24px';
+        cancelButton.style.border = 'none';
+        cancelButton.style.borderRadius = '6px';
+        cancelButton.style.background = '#666';
+        cancelButton.style.color = 'white';
+        cancelButton.style.cursor = 'pointer';
+        cancelButton.style.fontSize = '14px';
+        cancelButton.style.fontWeight = '500';
+        cancelButton.style.transition = 'background 0.2s';
+        
+        cancelButton.onmouseover = () => cancelButton.style.background = '#777';
+        cancelButton.onmouseout = () => cancelButton.style.background = '#666';
+        
+        cancelButton.onclick = () => {
+            overlay.remove();
+            resolve(false);
+        };
+
+        // Botão Confirmar
+        const confirmButton = document.createElement('button');
+        confirmButton.innerText = 'Confirm';
+        confirmButton.style.padding = '12px 24px';
+        confirmButton.style.border = 'none';
+        confirmButton.style.borderRadius = '6px';
+        confirmButton.style.background = '#e74c3c';
+        confirmButton.style.color = 'white';
+        confirmButton.style.cursor = 'pointer';
+        confirmButton.style.fontSize = '14px';
+        confirmButton.style.fontWeight = '500';
+        confirmButton.style.transition = 'background 0.2s';
+        
+        confirmButton.onmouseover = () => confirmButton.style.background = '#c0392b';
+        confirmButton.onmouseout = () => confirmButton.style.background = '#e74c3c';
+        
+        confirmButton.onclick = () => {
+            overlay.remove();
+            resolve(true);
+        };
+
+        // Fechar ao clicar no overlay
+        overlay.onclick = (e) => {
+            if (e.target === overlay) {
+                overlay.remove();
+                resolve(false);
+            }
+        };
+
+        // Suporte a teclas ESC e Enter
+        const keyHandler = (e) => {
+            if (e.key === 'Escape') {
+                overlay.remove();
+                document.removeEventListener('keydown', keyHandler);
+                resolve(false);
+            } else if (e.key === 'Enter') {
+                overlay.remove();
+                document.removeEventListener('keydown', keyHandler);
+                resolve(true);
+            }
+        };
+        document.addEventListener('keydown', keyHandler);
+
+        // Montar o modal
+        buttonContainer.appendChild(cancelButton);
+        buttonContainer.appendChild(confirmButton);
+        modal.appendChild(messageElement);
+        modal.appendChild(buttonContainer);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        
+        // Focar no botão cancelar por padrão
+        cancelButton.focus();
+    });
+}
+
 ctxZoom.addEventListener('click',function(){
+    showZoom();
+});
+
+
+function showZoom(){
     if(isZoomEnable == false){
         isZoomEnable = true;
         zoomControls.classList.add('visible');
@@ -2221,9 +2362,7 @@ ctxZoom.addEventListener('click',function(){
         isZoomEnable = false;
         zoomControls.classList.remove('visible');
     }
-});
-
-
+}
 
 
 
@@ -2481,11 +2620,13 @@ function saveCredentials() {
     localStorage.setItem('savedCredentials', JSON.stringify(savedCredentials));
 }
 
-function deleteCredential(index) {
-    if (confirm('Delete this saved login?')) {
+async function deleteCredential(index) {
+    const confirmed = await showConfirm('Delete this saved login?');
+    if (confirmed) {
         savedCredentials.splice(index, 1);
         saveCredentials();
         updateCredentialsList();
+        showMessage('Credential deleted!');
     }
 }
 
@@ -2603,6 +2744,8 @@ function showMessage(message) {
         modal.remove();
     }, 2000);
 }
+
+
 
 
 // Auto-fill credentials when page loads
@@ -3071,8 +3214,9 @@ let isErasing = false;
 let drawingData = JSON.parse(localStorage.getItem('drawingData')) || {};
 let browsingHistory = JSON.parse(localStorage.getItem('browsingHistory')) || [];
 
-btnClearHistory.addEventListener('click', () => {
-    if (confirm("Are you sure you want to clear the browsing history?")) {
+btnClearHistory.addEventListener('click', async () => {
+    const confirmed = await showConfirm('Are you sure you want to clear the browsing history?');
+    if (confirmed) {
         browsingHistory = [];
         localStorage.setItem('browsingHistory', JSON.stringify(browsingHistory));
         showMessage('Browsing history cleared.');
@@ -3181,8 +3325,9 @@ function showHistoryModal() {
       closeSidebar();
     };
   });
-  document.getElementById('btnClearHistorySidebar2').onclick = () => {
-    if (confirm("Are you sure you want to clear all browsing history?")) {
+  document.getElementById('btnClearHistorySidebar2').onclick = async () => {
+    const confirmed = await showConfirm("Are you sure you want to clear all browsing history?");
+    if (confirmed) {
       browsingHistory = [];
       localStorage.setItem('browsingHistory', JSON.stringify(browsingHistory));
       closeSidebar();
@@ -3222,8 +3367,9 @@ function updateHistoryList() {
     historySearch.value = '';
 }
 
-btnClearHistoryModal.addEventListener('click', () => {
-    if (confirm("Are you sure you want to clear all browsing history?")) {
+btnClearHistoryModal.addEventListener('click', async () => {
+    const confirmed = await showConfirm("Are you sure you want to clear all browsing history?");
+    if (confirmed) {
         browsingHistory = [];
         localStorage.setItem('browsingHistory', JSON.stringify(browsingHistory));
         updateHistoryList();
@@ -3250,12 +3396,12 @@ btnSaveSettings.addEventListener('click', () => {
 
 
 
-btnClean.addEventListener('click', (e) => {
+btnClean.addEventListener('click', async (e) => {
     e.stopPropagation();
 
-
+    const confirmed = await showConfirm('Are you sure you want to clear the board?');
     // Confirmação antes de limpar
-    if (confirm('Are you sure you want to clear the board?')) {
+    if (confirmed) {
         clearDrawing();
         showMessage('Board cleaned.');
         
@@ -5945,6 +6091,11 @@ document.addEventListener('keydown', (e) => {
         e.preventDefault();
         showPasswordsGeneratorModal();
     }
+    else if(e.ctrlKey && e.key === 'z'){
+        e.preventDefault();
+        showZoom();
+    }
+
     if (e.key === 'F12') {
         // Encontra todos os webviews e abre o DevTools para o que está em foco
         const webviews = document.querySelectorAll('webview');
@@ -6071,8 +6222,9 @@ btnSettings.addEventListener('click', () => {
       <button class="modal-button modal-button-primary" id="btnSaveSettingsSidebar">Save</button>
     </div>
   `);
-  document.getElementById('btnClearHistorySidebar').onclick = () => {
-    if (confirm("Are you sure you want to clear the browsing history?")) {
+  document.getElementById('btnClearHistorySidebar').onclick = async () => {
+    const confirmed = await showConfirm('Are you sure you want to clear the browsing history?');
+    if (confirmed) {
       browsingHistory = [];
       localStorage.setItem('browsingHistory', JSON.stringify(browsingHistory));
       showMessage('Browsing history cleared.');
@@ -6181,8 +6333,9 @@ btnHistory.addEventListener('click', () => {
       closeSidebar();
     };
   });
-  document.getElementById('btnClearHistorySidebar2').onclick = () => {
-    if (confirm("Are you sure you want to clear all browsing history?")) {
+  document.getElementById('btnClearHistorySidebar2').onclick = async () => {
+    const confirmed = await showConfirm("Are you sure you want to clear all browsing history?");
+    if (confirmed) {
       browsingHistory = [];
       localStorage.setItem('browsingHistory', JSON.stringify(browsingHistory));
       closeSidebar();
