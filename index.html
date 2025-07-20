@@ -2283,9 +2283,9 @@ function processQuickSearch() {
     quickSearchModal.style.display = 'none';
 }
 
-// Atalho Alt+T para abrir o modal de pesquisa rápida
+// Atalho Ctrl+Q para abrir o modal de pesquisa rápida
 document.addEventListener('keydown', (e) => {
-    if (e.altKey && e.key.toLowerCase() === 't') {
+    if (e.ctrlKey && e.key.toLowerCase() === 'q') {
         e.preventDefault();
         openQuickSearchModal();
     }
