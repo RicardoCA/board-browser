@@ -1867,6 +1867,25 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     <button id="reset-zoom">⟲</button>
   </div>
 
+  <div class="modal-overlay" id="quickSearchModal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Quick Search</h3>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <input type="text" id="quickSearchInput" placeholder="Enter URL or search term..." autofocus />
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-button modal-button-secondary close-modal">Cancel</button>
+            <button class="modal-button modal-button-primary" id="btnQuickSearchGo">Go</button>
+        </div>
+    </div>
+</div>
+
+
 
   <div class="modal-overlay" id="passwordGeneratorModal">
     <div class="modal">
@@ -2210,6 +2229,82 @@ const btnCredentials = document.createElement('button');
 btnCredentials.id = 'btnCredentials';
 btnCredentials.innerHTML = '🔑 Saved Logins';
 moreOptionsMenu.insertBefore(btnCredentials, btnRenameBoards);
+
+const quickSearchModal = document.getElementById('quickSearchModal');
+const quickSearchInput = document.getElementById('quickSearchInput');
+const btnQuickSearchGo = document.getElementById('btnQuickSearchGo');
+
+// Função para verificar se uma string parece uma URL
+function isLikelyUrl(text) {
+    const urlPattern = /^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w- .\/?%&=]*)?$/i;
+    const tldPattern = /\.(com|net|org|io|gov|edu|co|br|uk|de|fr|es|it|ru|ca|au|in|jp|cn|us|info|biz|xyz|me|tv|cc|ws|eu|mobi|app|dev|online|store|shop|blog|tech|site|website|space|digital|live|life|world|club|fun|top|pro|asia|africa|europe|northamerica|southamerica|australia|antarctica|arctic|global|local|dev|test|example)$/i;
+    
+    return urlPattern.test(text) || tldPattern.test(text.split(' ')[0]);
+}
+
+// Função para abrir o modal de pesquisa rápida
+function openQuickSearchModal() {
+    quickSearchModal.style.display = 'flex';
+    quickSearchInput.value = '';
+    quickSearchInput.focus();
+}
+
+// Função para processar a pesquisa/URL
+function processQuickSearch() {
+    const input = quickSearchInput.value.trim();
+    if (!input) return;
+
+    let url;
+    
+    if (isLikelyUrl(input)) {
+        // Se parece uma URL, adiciona http:// se não tiver
+        url = input.startsWith('http://') || input.startsWith('https://') ? 
+              input : `https://${input}`;
+    } else {
+        // Se não parece URL, faz uma pesquisa
+        const searchEngine = defaultSearchEngine || 'google';
+        switch(searchEngine) {
+            case 'duckduckgo':
+                url = `https://duckduckgo.com/?q=${encodeURIComponent(input)}`;
+                break;
+            case 'bing':
+                url = `https://www.bing.com/search?q=${encodeURIComponent(input)}`;
+                break;
+            case 'chatgpt':
+                url = `https://chat.openai.com/?q=${encodeURIComponent(input)}`;
+                break;
+            case 'google':
+            default:
+                url = `https://www.google.com/search?q=${encodeURIComponent(input)}`;
+        }
+    }
+
+    createTab(url);
+    quickSearchModal.style.display = 'none';
+}
+
+// Atalho Alt+T para abrir o modal de pesquisa rápida
+document.addEventListener('keydown', (e) => {
+    if (e.altKey && e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        openQuickSearchModal();
+    }
+});
+
+// Event listeners para o modal
+btnQuickSearchGo.addEventListener('click', processQuickSearch);
+quickSearchInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        processQuickSearch();
+    }
+});
+
+// Fechar modal ao clicar fora
+quickSearchModal.addEventListener('click', (e) => {
+    if (e.target === quickSearchModal) {
+        quickSearchModal.style.display = 'none';
+    }
+});
 
 
 
