@@ -1818,6 +1818,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
       <button id="btnPasswordsGenerator">🔐 Password Generator</button>
       <button id="btnRenameBoards">✏️ Rename Boards</button>
       <button id="btnSettings">⚙️ Settings</button>
+      <button id="btnAbout">ℹ️ About</button>
     </div>
 
     <div style="position: relative;">
@@ -1884,6 +1885,27 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
             <button class="modal-button modal-button-primary" id="btnQuickSearchGo">Go</button>
         </div>
     </div>
+</div>
+
+<div class="modal-overlay" id="aboutModal">
+  <div class="modal-content" style="max-width: 400px;">
+    <div class="modal-header">
+      <h3 class="modal-title">About</h3>
+      <button class="close-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h3 style="margin: 10px 0 5px 0; color: white;">Board Browser</h3>
+        <p style="margin: 0; color: #aaa;">Version <span id="appVersion"></span></p>
+      </div>
+      <div style="border-top: 1px solid #444; padding-top: 15px;">
+        <p style="text-align: center; color: #aaa; margin: 0;">
+          &copy; 2025 Ricardo C Andrade<br>
+          All rights reserved
+        </p>
+      </div>
+    </div>
+  </div>
 </div>
 
 
@@ -2146,6 +2168,9 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
   </div>
 
 <script>
+let VERSION = 'Alpha 14.0'
+
+
 const desktopContainer = document.getElementById('desktop-container');
 const desktop = document.getElementById('desktop');
 const btnNewTab = document.getElementById('btnNewTab');
@@ -2235,6 +2260,13 @@ const quickSearchModal = document.getElementById('quickSearchModal');
 const quickSearchInput = document.getElementById('quickSearchInput');
 const btnQuickSearchGo = document.getElementById('btnQuickSearchGo');
 const btnQuickSearch = document.getElementById('btnQuickSearch');
+const btnAbout = document.getElementById('btnAbout');
+
+btnAbout.addEventListener('click', function(){
+    document.getElementById('appVersion').textContent = VERSION;
+    document.getElementById('aboutModal').style.display = 'flex';
+    moreOptionsMenu.style.display = 'none';
+});
 
 btnQuickSearch.addEventListener('click', function(){
     openQuickSearchModal();
