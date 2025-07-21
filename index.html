@@ -1827,6 +1827,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
         <button id="btnCreateTextField">📝 Text field</button>
         <button id="btnCreateList">📋 List</button>
         <button id="btnCreateBoard">🆕 New Board</button>
+        <button id="btnQuickSearch">🔍 Quick Search</button>
       </div>
     </div>
 
@@ -2233,6 +2234,11 @@ moreOptionsMenu.insertBefore(btnCredentials, btnRenameBoards);
 const quickSearchModal = document.getElementById('quickSearchModal');
 const quickSearchInput = document.getElementById('quickSearchInput');
 const btnQuickSearchGo = document.getElementById('btnQuickSearchGo');
+const btnQuickSearch = document.getElementById('btnQuickSearch');
+
+btnQuickSearch.addEventListener('click', function(){
+    openQuickSearchModal();
+});
 
 // Função para verificar se uma string parece uma URL
 function isLikelyUrl(text) {
