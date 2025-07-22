@@ -24,6 +24,33 @@ function createWindow() {
   const completedDownloads = [];
   const webContentsWithListeners = new Set(); // Para evitar listeners duplicados
 
+
+  ipcMain.on('save-image', (event, imageData) => {
+  const { dialog } = require('electron');
+  const fs = require('fs');
+  const path = require('path');
+  
+  dialog.showSaveDialog({
+    title: 'Salvar Card Comemorativo',
+    defaultPath: path.join(app.getPath('pictures'), `BoardBrowser_Card_${new Date().toISOString().slice(0,10)}.png`),
+    filters: [
+      { name: 'Images', extensions: ['png'] }
+    ]
+  }).then(result => {
+    if (!result.canceled && result.filePath) {
+      const base64Data = imageData.replace(/^data:image\/png;base64,/, "");
+      fs.writeFile(result.filePath, base64Data, 'base64', (err) => {
+        if (err) {
+          console.error('Erro ao salvar imagem:', err);
+        }
+      });
+    }
+  });
+});
+
+
+
+
   // Handler para enviar lista de downloads para o renderer
   ipcMain.handle('get-completed-downloads', () => {
     return completedDownloads;

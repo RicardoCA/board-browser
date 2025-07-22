@@ -1830,6 +1830,10 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
       <button id="btnSettings">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-settings-icon lucide-settings"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
         Settings</button>
+        <button id="btnCard">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-id-card-icon lucide-id-card"><path d="M16 10h2"/><path d="M16 14h2"/><path d="M6.17 15a3 3 0 0 1 5.66 0"/><circle cx="9" cy="11" r="2"/><rect x="2" y="5" width="20" height="14" rx="2"/></svg>
+            Member Card
+        </button>
       <button id="btnAbout">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info-icon lucide-info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
         About</button>
@@ -1891,6 +1895,59 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     <span id="zoom-level">100%</span>
     <button id="reset-zoom">⟲</button>
   </div>
+
+  <!-- Modal Comemorativo -->
+<div class="modal-overlay" id="celebrationModal">
+  <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3 class="modal-title">🎉 Your Progress!</h3>
+      <button class="close-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="celebrationCard" style="background: linear-gradient(135deg, #007acc 0%, #1e1e1e 100%); 
+            border-radius: 10px; padding: 20px; color: white; text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2); position: relative;">
+        
+        <div style="font-size: 24px; margin-bottom: 10px;">✨ Congratulations! ✨</div>
+        <div style="font-size: 16px; margin-bottom: 20px;">You have been using Board Browser for <span id="usageDays">7</span> days!</div>
+        
+        <div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+          <div style="font-size: 14px; margin-bottom: 5px;">Your Progress:</div>
+          <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 10px;">
+            <div style="background: rgba(255,255,255,0.2); border-radius: 50%; width: 50px; height: 50px; 
+                  display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              <span style="font-size: 18px; font-weight: bold;" id="boardsCount">5</span>
+              <span style="font-size: 10px;">Boards</span>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); border-radius: 50%; width: 50px; height: 50px; 
+                  display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              <span style="font-size: 18px; font-weight: bold;" id="tabsCount">12</span>
+              <span style="font-size: 10px;">Webviews</span>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); border-radius: 50%; width: 50px; height: 50px; 
+                  display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              <span style="font-size: 18px; font-weight: bold;" id="notesCount">8</span>
+              <span style="font-size: 10px;">Text Fields</span>
+            </div>
+          </div>
+        </div>
+        
+        <div style="font-size: 14px; margin-bottom: 20px;">Keep exploring all the possibilities!</div>
+        
+        <div style="position: absolute; bottom: 10px; right: 10px; font-size: 10px; opacity: 0.7;">
+          Board Browser v <span id="cardVersion">1.0</span>
+        </div>
+      </div>
+      
+      <div class="modal-footer" style="justify-content: center; margin-top: 20px;">
+        <button id="saveCardBtn" class="modal-button modal-button-primary" style="margin-right: 10px;">
+          <i data-lucide="download"></i> Save as PNG
+        </button>
+        
+      </div>
+    </div>
+  </div>
+</div>
 
   <div class="modal-overlay" id="quickSearchModal">
     <div class="modal-content" style="max-width: 500px;">
@@ -2203,6 +2260,11 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
 
 <script>
 let VERSION = 'Alpha 14.0'
+let firstUseDate = localStorage.getItem('firstUseDate');
+if (!firstUseDate) {
+  firstUseDate = new Date().toISOString();
+  localStorage.setItem('firstUseDate', firstUseDate);
+}
 
 
 const desktopContainer = document.getElementById('desktop-container');
@@ -2295,11 +2357,83 @@ const quickSearchInput = document.getElementById('quickSearchInput');
 const btnQuickSearchGo = document.getElementById('btnQuickSearchGo');
 const btnQuickSearch = document.getElementById('btnQuickSearch');
 const btnAbout = document.getElementById('btnAbout');
+const btnCard = document.getElementById('btnCard');
+const saveCardBtn = document.getElementById('saveCardBtn');
+
+
+const firstDate = new Date(firstUseDate);
+const now = new Date();
+const diffTime = Math.abs(now - firstDate);
+const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+if (diffDays >= 7 && !localStorage.getItem('celebrationShown')) {
+  setTimeout(showCelebrationModal, 2000);
+  localStorage.setItem('celebrationShown', 'true');
+}
+
+
+btnCard.addEventListener('click', function(){
+    showCelebrationModal();
+});
+
+function showCelebrationModal() {
+  const now = new Date();
+  const firstDate = new Date(firstUseDate);
+  const diffTime = Math.abs(now - firstDate);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+  
+  // Atualiza os dados do card
+  document.getElementById('usageDays').textContent = diffDays;
+  document.getElementById('boardsCount').textContent = Object.keys(boards).length;
+  
+  let totalTabs = 0;
+  Object.values(boards).forEach(board => {
+    totalTabs += board.tabs.length;
+  });
+  document.getElementById('tabsCount').textContent = totalTabs;
+  
+  let totalNotes = 0;
+  Object.values(boards).forEach(board => {
+    totalNotes += board.textFields.length + board.lists.length;
+  });
+  document.getElementById('notesCount').textContent = totalNotes;
+  
+  // Obtém a versão do app
+  //const { app } = require('electron').remote;
+  document.getElementById('cardVersion').textContent = VERSION; //app.getVersion();
+  
+  // Mostra o modal
+  document.getElementById('celebrationModal').style.display = 'flex';
+}
+
+
+saveCardBtn.addEventListener('click', saveCardAsPNG);
+
+
+
+
+function saveCardAsPNG() {
+  const card = document.getElementById('celebrationCard');
+  const { ipcRenderer } = require('electron');
+  
+  // Usamos html2canvas para capturar o card
+  const html2canvas = require('html2canvas');
+  
+  html2canvas(card, {
+    backgroundColor: null,
+    scale: 2 // Melhor qualidade
+  }).then(canvas => {
+    const image = canvas.toDataURL('image/png');
+    ipcRenderer.send('save-image', image);
+  });
+}
+
 
 btnAbout.addEventListener('click', function(){
     document.getElementById('appVersion').textContent = VERSION;
     document.getElementById('aboutModal').style.display = 'flex';
     moreOptionsMenu.style.display = 'none';
+    
 });
 
 btnQuickSearch.addEventListener('click', function(){
