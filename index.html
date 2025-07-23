@@ -5521,8 +5521,8 @@ btnAdBlocker.addEventListener('click', (e) => {
             tab.tabFrame.classList.remove('maximized-tab');
             tab.tabFrame.style.top = savedState?.position?.top || '50px';
             tab.tabFrame.style.left = savedState?.position?.left || '50px';
-            tab.tabFrame.style.width = savedState?.size?.width || '600px';
-            tab.tabFrame.style.height = savedState?.size?.height || '400px';
+            tab.tabFrame.style.width = '600px';
+            tab.tabFrame.style.height = '400px';
             tab.tabFrame.style.borderRadius = '8px';
             tab.tabFrame.style.boxShadow = '0 0 15px rgba(0,0,0,0.7)';
             tab.tabFrame.style.zIndex = savedState?.position?.zIndex || (100 + id);
@@ -5717,8 +5717,8 @@ function createTextField(savedState = null, targetBoardId = null) {
             textField.textFieldFrame.classList.remove('maximized-textfield');
             textField.textFieldFrame.style.top = savedState?.position?.top || '80px';
             textField.textFieldFrame.style.left = savedState?.position?.left || (80 + id * 30) + 'px';
-            textField.textFieldFrame.style.width = savedState?.size?.width || '600px';
-            textField.textFieldFrame.style.height = savedState?.size?.height || '400px';
+            textField.textFieldFrame.style.width = '600px';
+            textField.textFieldFrame.style.height = '400px';
             textField.textFieldFrame.style.borderRadius = '8px';
             textField.textFieldFrame.style.boxShadow = '0 0 15px rgba(0,0,0,0.7)';
             textField.textFieldFrame.style.zIndex = savedState?.position?.zIndex || (200 + id);
@@ -5907,8 +5907,8 @@ function createList(savedState = null, targetBoardId = null) {
             list.listFrame.classList.remove('maximized-list');
             list.listFrame.style.top = savedState?.position?.top || '110px';
             list.listFrame.style.left = savedState?.position?.left || (110 + id * 30) + 'px';
-            list.listFrame.style.width = savedState?.size?.width || '400px';
-            list.listFrame.style.height = savedState?.size?.height || '300px';
+            list.listFrame.style.width = '400px';
+            list.listFrame.style.height = '300px';
             list.listFrame.style.borderRadius = '8px';
             list.listFrame.style.boxShadow = '0 0 15px rgba(0,0,0,0.7)';
             list.listFrame.style.zIndex = savedState?.position?.zIndex || (300 + id);
@@ -6220,6 +6220,7 @@ function maximizeTab(id) {
             t.tabFrame.style.zIndex = '9999';
         } else {
             t.tabFrame.classList.remove('maximized-tab');
+           
         }
     });
 
