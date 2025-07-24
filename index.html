@@ -2197,6 +2197,8 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
           <option value="duckduckgo">DuckDuckGo</option>
           <option value="bing">Bing</option>
           <option value="chatgpt">ChatGPT</option>
+          <option value="perplexity">Perplexity</option>
+          
         </select>
       </div>
 
@@ -2259,7 +2261,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
   </div>
 
 <script>
-let VERSION = 'Alpha 14.0'
+let VERSION = 'Beta 1.0'
 let firstUseDate = localStorage.getItem('firstUseDate');
 if (!firstUseDate) {
   firstUseDate = new Date().toISOString();
@@ -2481,6 +2483,9 @@ function processQuickSearch() {
                 break;
             case 'bing':
                 url = `https://www.bing.com/search?q=${encodeURIComponent(input)}`;
+                break;
+            case 'perplexity':
+                url = `https://www.perplexity.ai/?q=${encodeURIComponent(input)}`;
                 break;
             case 'chatgpt':
                 url = `https://chat.openai.com/?q=${encodeURIComponent(input)}`;
@@ -5464,6 +5469,9 @@ btnAdBlocker.addEventListener('click', (e) => {
                     case 'bing':
                         newUrl = `https://www.bing.com/search?q=${encodeURIComponent(newUrl)}`;
                         break;
+                    case 'perplexity':
+                        newUrl = `https://www.perplexity.ai/?q=${encodeURIComponent(newUrl)}`;
+                        break;
                     case 'chatgpt':
                         newUrl = `https://chatgpt.com/?q=${encodeURIComponent(newUrl)}`;
                         break;
@@ -6526,6 +6534,7 @@ btnSettings.addEventListener('click', () => {
         <option value="duckduckgo" ${defaultSearchEngine==='duckduckgo'?'selected':''}>DuckDuckGo</option>
         <option value="bing" ${defaultSearchEngine==='bing'?'selected':''}>Bing</option>
         <option value="chatgpt" ${defaultSearchEngine==='chatgpt'?'selected':''}>ChatGPT</option>
+        <option value="perplexity" ${defaultSearchEngine==='perplexity'?'selected':''}>Perplexity</option>
       </select>
     </div>
     <div class="form-group">
