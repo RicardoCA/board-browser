@@ -5019,6 +5019,29 @@ function createTab(url = defaultStartPage, savedState = null, targetBoardId = nu
     let isAdBlockerActive = false;
     const btnCopyElements = header.querySelector('.btn-copy-elements');
 
+    function removeBlankTargets() {
+        return `
+        (function() {
+            function removeBlankTargetsFromLinks() {
+                const links = document.querySelectorAll('a[target="_blank"]');
+                links.forEach(link => {
+                    link.removeAttribute('target');
+                });
+            }
+
+            // Executa imediatamente
+            removeBlankTargetsFromLinks();
+            
+            // Observa mudanças no DOM para links dinâmicos
+            const observer = new MutationObserver(removeBlankTargetsFromLinks);
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        })();
+        `;
+    }
+
 
     const getAdBlockRules = () => {
     return `
@@ -5184,6 +5207,12 @@ function createTab(url = defaultStartPage, savedState = null, targetBoardId = nu
     })();
     `;
 };
+
+webview.addEventListener('did-finish-load', () => {
+    webview.executeJavaScript(removeBlankTargets()).catch(err => {
+        console.error('Failed to remove blank targets:', err);
+    });
+});
 
 const btnAdBlocker = header.querySelector('.btn-ad-blocker');
 
