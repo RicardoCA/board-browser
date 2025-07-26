@@ -4938,6 +4938,8 @@ function closeBoard(boardId) {
     saveState();
 }
 
+
+
 function createTab(url = defaultStartPage, savedState = null, targetBoardId = null){
     const boardId = targetBoardId || currentBoardId;
     if (!boardId || !boards[boardId]) return;
