@@ -201,6 +201,7 @@ width: 100%;
 height: calc(100% - 40px);
 overflow: auto;
 position: relative;
+z-index: 0;
 }
 
 #desktop {
@@ -227,11 +228,13 @@ transition: transform 0.2s ease;
     min-width: 300px;
     min-height: 200px;
     resize: none;
+    z-index: 100;
 }
 
 .tab-frame.focused, .textfield-frame.focused, .list-frame.focused {
     border-color: #007acc;
     box-shadow: 0 0 20px rgba(0,122,204,0.5);
+    z-index:200;
 }
 
 .tab-header, .textfield-header, .list-header {
@@ -1076,7 +1079,7 @@ top: 0;
 left: 0;
 width: 100%;
 height: 100%;
-z-index: 1;
+z-index: 1000;
 pointer-events: none;
 }
 
@@ -1859,6 +1862,151 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     z-index: 100001 !important;
 }
 
+
+/* Estilo para o input de chat */
+.chat-input-container {
+    position: absolute;
+    width: 300px;
+    height: 40px;
+    background: #333;
+    border-radius: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    z-index: 50;
+    cursor: move;
+    border: 1px solid #555;
+}
+
+.chat-input-container input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: white;
+    outline: none;
+    font-size: 14px;
+    pointer-events: auto; /* Garante que o input sempre receba eventos */
+    cursor: text; /* Mostra o cursor de texto quando sobre o input */
+}
+
+.chat-input-container button {
+    background: transparent;
+    border: none;
+    color: #007acc;
+    cursor: pointer;
+}
+
+
+/* Reset completo do chat */
+#chatModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    z-index: 100000;
+    justify-content: center;
+    align-items: center;
+}
+
+.chat-container {
+    width: 100%;
+    max-width: 500px;
+    height: 80vh;
+    background: #2a2a2a;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chat-header {
+    padding: 15px;
+    background: #333;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.messages-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    background: #1e1e1e;
+}
+
+.message {
+    max-width: 80%;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    border-radius: 18px;
+    word-break: break-word;
+}
+
+.user-message {
+    background: #007acc;
+    color: white;
+    margin-left: auto;
+    border-bottom-right-radius: 5px;
+}
+
+.ai-message {
+    background: #444;
+    color: white;
+    margin-right: auto;
+    border-bottom-left-radius: 5px;
+}
+
+.input-area {
+    padding: 15px;
+    background: #333;
+    display: flex;
+    gap: 10px;
+}
+
+.input-area input {
+    flex: 1;
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: none;
+    background: #444;
+    color: white;
+}
+
+.input-area button {
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: none;
+    background: #007acc;
+    color: white;
+    cursor: pointer;
+}
+
+.export-chat{
+    background: none;
+    border: none;
+    color: #ccc;
+}
+
+.close-chat {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 24px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
 </style>
 
 </head>
@@ -1926,6 +2074,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
             New Board</button>
         <button id="btnQuickSearch"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search-icon lucide-search"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
             Quick Search</button>
+        
       </div>
     </div>
 
@@ -1966,6 +2115,26 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     <button id="reset-zoom">⟲</button>
   </div>
 
+  
+  
+  <div id="chatModal" class="modal-overlay">
+    <div class="chat-container">
+        <div class="chat-header">
+            <h3>AI Assistant</h3>
+            <button class="export-chat">Export in Text Field</button>
+            <button class="close-chat">&times;</button>
+        </div>
+        
+        <div class="messages-container" id="chatMessages">
+            <!-- Mensagens aparecerão aqui -->
+        </div>
+        
+        <div class="input-area">
+            <input type="text" id="chatInput" placeholder="Type your message...">
+            <button id="sendMessageBtn">Send</button>
+        </div>
+    </div>
+</div>
 
 
 <div class="modal-overlay" id="achievementsModal">
@@ -2364,7 +2533,7 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
   </div>
 
 <script>
-let VERSION = 'Beta 1.0'
+let VERSION = 'Beta 2.0'
 let firstUseDate = localStorage.getItem('firstUseDate');
 if (!firstUseDate) {
   firstUseDate = new Date().toISOString();
@@ -2438,6 +2607,7 @@ const ctxChangeTheme = document.getElementById("ctx-change-theme");
 const ctxResetTheme = document.getElementById("btnResetThemeColor");
 const ctxZoom = document.getElementById("ctx-zoom");
 
+let isMoveModeActive = false;
 var isCopyModeActive = false;
 var isZoomEnable = false;
 let currentThemeColor = localStorage.getItem('themeColor') || '#007acc';
@@ -2452,10 +2622,12 @@ const btnSaveCredential = document.getElementById('btnSaveCredential');
 
 const btnPasswordsGenerator = document.getElementById("btnPasswordsGenerator");
 const passwordGeneratorModal = document.getElementById("passwordGeneratorModal");
+
+const btnInputAI = document.createElement('button');
+
+
 const btnCredentials = document.createElement('button');
-btnCredentials.id = 'btnCredentials';
-btnCredentials.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-key-round-icon lucide-key-round"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg> Saved Logins';
-moreOptionsMenu.insertBefore(btnCredentials, btnRenameBoards);
+
 
 const quickSearchModal = document.getElementById('quickSearchModal');
 const quickSearchInput = document.getElementById('quickSearchInput');
@@ -2464,6 +2636,256 @@ const btnQuickSearch = document.getElementById('btnQuickSearch');
 const btnAbout = document.getElementById('btnAbout');
 const btnCard = document.getElementById('btnCard');
 const saveCardBtn = document.getElementById('saveCardBtn');
+
+const exportChatBtn = document.getElementsByClassName("export-chat")[0];
+
+let chatInputDraggable = null;
+
+
+exportChatBtn.addEventListener('click',() =>{
+    var chatMessages = document.getElementById('chatMessages');
+    var divs = chatMessages.getElementsByTagName("div");
+    var texto = "";
+    for(var i = 0; i < divs.length; i++){
+        if(divs[i].classList.contains("ai-message")){
+            texto += "[AI]\n";
+        }
+        else{
+            texto += "[USER]\n";
+        }
+        texto += divs[i].textContent + "\n\n";
+    }
+    
+
+    createTextField(null,null,texto);
+});
+
+
+
+function initiateButtons(){
+    btnInputAI.id = 'btnInputAI';
+    btnInputAI.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-brain-icon lucide-brain"><path d="M12 18V5"/><path d="M15 13a4.17 4.17 0 0 1-3-4 4.17 4.17 0 0 1-3 4"/><path d="M17.598 6.5A3 3 0 1 0 12 5a3 3 0 1 0-5.598 1.5"/><path d="M17.997 5.125a4 4 0 0 1 2.526 5.77"/><path d="M18 18a4 4 0 0 0 2-7.464"/><path d="M19.967 17.483A4 4 0 1 1 12 18a4 4 0 1 1-7.967-.517"/><path d="M6 18a4 4 0 0 1-2-7.464"/><path d="M6.003 5.125a4 4 0 0 0-2.526 5.77"/></svg> AI';
+    
+    if(defaultAIOption === 'AIenabled'){
+        dropdownMenu.insertBefore(btnInputAI,btnQuickSearch);
+    }
+    
+
+    btnCredentials.id = 'btnCredentials';
+    btnCredentials.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-key-round-icon lucide-key-round"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg> Saved Logins';
+    moreOptionsMenu.insertBefore(btnCredentials, btnRenameBoards);
+}
+
+function removeElementsByClass(className) {
+    const elements = document.querySelectorAll(`.${className}`);
+    elements.forEach(element => element.remove());
+}
+
+
+function createChatInput() {
+    if (chatInputDraggable){
+        removeElementsByClass("chat-input-container");
+        chatInputDraggable = null;
+        return;
+    }
+    
+    chatInputDraggable = document.createElement('div');
+    chatInputDraggable.className = 'chat-input-container';
+    chatInputDraggable.innerHTML = `
+        <input type="text" placeholder="Ask AI anything..." id="aiChatInput">
+        <button><i data-lucide="send"></i></button>
+    `;
+    
+    // Posição inicial
+    chatInputDraggable.style.left = '20px';
+    chatInputDraggable.style.top = '60px';
+    
+
+    document.body.appendChild(chatInputDraggable);
+    lucide.createIcons();
+    
+    // Tornar arrastável
+    makeDraggable2(chatInputDraggable);
+    
+    // Evento para abrir o chat ao pressionar Enter
+    const input = chatInputDraggable.querySelector('input');
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && input.value.trim()) {
+            openChatModal(input.value.trim());
+            input.value = '';
+        }
+    });
+    
+    // Evento para o botão
+    chatInputDraggable.querySelector('button').addEventListener('click', () => {
+        if (input.value.trim()) {
+            openChatModal(input.value.trim());
+            input.value = '';
+        }
+    });
+}
+
+// Função para abrir o modal de chat
+function openChatModal(initialMessage = '') {
+    const chatModal = document.getElementById('chatModal');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    
+    // Reset do modal
+    chatMessages.innerHTML = '';
+    chatInput.value = '';
+    
+    chatModal.style.display = 'flex';
+    
+    if (initialMessage) {
+        addMessage(initialMessage, 'user');
+        sendToGroq(initialMessage);
+    }
+    
+    // Focar no input automaticamente
+    setTimeout(() => {
+        chatInput.focus();
+    }, 100);
+    
+    // Configura o auto-scroll quando novas mensagens chegam
+    const observer = new MutationObserver(() => {
+        const isScrolledToBottom = chatMessages.scrollHeight - chatMessages.clientHeight <= chatMessages.scrollTop + 50;
+        if (isScrolledToBottom) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    });
+    
+    observer.observe(chatMessages, { childList: true });
+    
+    // Fechar modal
+    document.querySelector('.close-chat').addEventListener('click', () => {
+        observer.disconnect();
+        chatModal.style.display = 'none';
+    });
+    
+    // Enviar mensagem
+    function sendMessage() {
+        const message = chatInput.value.trim();
+        if (message) {
+            addMessage(message, 'user');
+            chatInput.value = '';
+            sendToGroq(message);
+        }
+    }
+    
+    document.getElementById('sendMessageBtn').addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+}
+
+// Adicionar mensagem ao chat
+function addMessage(text, sender) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}-message`;
+    
+    // Processa quebras de linha e URLs
+    const processedText = text
+        .replace(/\n/g, '<br>')
+        .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+    
+    messageDiv.innerHTML = processedText;
+    chatMessages.appendChild(messageDiv);
+    
+    // Scroll automático apenas se já estiver no final
+    const isScrolledToBottom = chatMessages.scrollHeight - chatMessages.clientHeight <= chatMessages.scrollTop + 1;
+    if (isScrolledToBottom) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+}
+
+// Enviar para a API da Groq
+async function sendToGroq(message) {
+    try {
+        
+        const apiKey = '';
+        
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'llama-3.3-70b-versatile', // ou outro modelo disponível
+                messages: [{ role: 'user', content: message }],
+                temperature: 0.7
+            })
+        });
+        
+        const data = await response.json();
+        if (data.choices && data.choices[0].message) {
+            addMessage(data.choices[0].message.content, 'ai');
+        } else {
+            addMessage("Sorry, I couldn't process your request.", 'ai');
+        }
+    } catch (error) {
+        console.error('Error calling Groq API:', error);
+        addMessage("Sorry, there was an error processing your request.", 'ai');
+    }
+}
+
+// SOLUÇÃO 1: Usar uma área específica para arrasto (não o input)
+function makeDraggable2(element) {
+
+    
+
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    
+    // Procura por um elemento com classe 'drag-handle' ou usa o próprio elemento
+    let dragHandle = element.querySelector('.drag-handle') || element;
+    
+    // Se o dragHandle for um input, usa o elemento pai
+    if (dragHandle.tagName === 'INPUT') {
+        dragHandle = element;
+    }
+    
+    dragHandle.onmousedown = dragMouseDown;
+
+    function dragMouseDown(e) {
+        if(!btnMoveMode.classList.contains('active')) {
+            return; // Se não tem a classe active, não permite movimentação
+        }
+
+        // Se o clique foi em um elemento interativo, não arrastamos
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || 
+            e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+            return;
+        }
+        
+        e = e || window.event;
+        e.preventDefault();
+        
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        
+        element.style.top = (element.offsetTop - pos2) + "px";
+        element.style.left = (element.offsetLeft - pos1) + "px";
+    }
+
+    function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+}
 
 // Definição das conquistas
 const achievements = [
@@ -2892,6 +3314,10 @@ if (btnPasswordsGenerator) {
     });
 }
 
+btnInputAI.addEventListener('click', () => {
+    createChatInput();
+});
+
 btnCredentials.addEventListener('click', () => {
     showCredentialsModal();
     moreOptionsMenu.style.display = 'none';
@@ -3243,7 +3669,7 @@ function useCredential(index) {
     });
 }
 
-function showMessage(message) {
+function showMessage(message, time=2000) {
     const modal = document.createElement('div');
     modal.style.position = 'fixed';
     modal.style.top = '50%';
@@ -3259,7 +3685,7 @@ function showMessage(message) {
 
     setTimeout(() => {
         modal.remove();
-    }, 2000);
+    }, time);
 }
 
 
@@ -3707,6 +4133,7 @@ function applyThemeColor() {
 
 let defaultStartPage = localStorage.getItem('startPage') || 'https://www.google.com';
 let defaultSearchEngine = localStorage.getItem('searchEngine') || 'google';
+let defaultAIOption= localStorage.getItem('defaultAIOption') || 'AIdisabled';
 
 let lastRightClickPosition = null;
 let boards = {};
@@ -3724,7 +4151,6 @@ let startDragX, startDragY;
 let startScrollLeft, startScrollTop;
 let favorites = JSON.parse(localStorage.getItem('browserFavorites')) || [];
 let isDrawing = false;
-let isMoveModeActive = false;
 let currentColor = '#ff0000';
 let currentBrushSize = 5;
 let isErasing = false;
@@ -5796,7 +6222,7 @@ btnAdBlocker.addEventListener('click', (e) => {
     return id;
 }
 
-function createTextField(savedState = null, targetBoardId = null) {
+function createTextField(savedState = null, targetBoardId = null, initialText = null) {
     const boardId = targetBoardId || currentBoardId;
     if (!boardId || !boards[boardId]) return;
 
@@ -5869,13 +6295,23 @@ function createTextField(savedState = null, targetBoardId = null) {
     const textarea = document.createElement('textarea');
     textarea.placeholder = 'Digite seu texto aqui...';
 
-    if (savedState) {
+    // Definir o conteúdo do textarea
+    let textContent = '';
+    
+    if (initialText !== null) {
+        // Se foi passado um texto inicial, usar ele
+        textContent = initialText;
+    } else if (savedState) {
+        // Se não há texto inicial mas há savedState, usar o conteúdo salvo
         if (isConfigObject) {
-            textarea.value = savedState.content || '';
+            textContent = savedState.content || '';
         } else {
-            textarea.value = savedState.content || '';
+            textContent = savedState.content || '';
         }
     }
+    
+    textarea.value = textContent;
+    
     content.appendChild(textarea);
     tabFrame.appendChild(content);
 
@@ -6457,9 +6893,11 @@ function maximizeTab(id) {
             t.tabFrame.style.borderRadius = '0';
             t.tabFrame.style.boxShadow = 'none';
             t.tabFrame.style.zIndex = '9999';
+            removeElementsByClass("chat-input-container");
+            chatInputDraggable = null;
+            
         } else {
             t.tabFrame.classList.remove('maximized-tab');
-           
         }
     });
 
@@ -6480,6 +6918,8 @@ function maximizeTextField(id) {
             t.textFieldFrame.style.borderRadius = '0';
             t.textFieldFrame.style.boxShadow = 'none';
             t.textFieldFrame.style.zIndex = '9999';
+            removeElementsByClass("chat-input-container");
+            chatInputDraggable = null;
         } else {
             t.textFieldFrame.classList.remove('maximized-textfield');
         }
@@ -6502,6 +6942,8 @@ function maximizeList(id) {
             l.listFrame.style.borderRadius = '0';
             l.listFrame.style.boxShadow = 'none';
             l.listFrame.style.zIndex = '9999';
+            removeElementsByClass("chat-input-container");
+            chatInputDraggable = null;
         } else {
             l.listFrame.classList.remove('maximized-list');
         }
@@ -6509,6 +6951,8 @@ function maximizeList(id) {
 
     saveState();
 }
+
+
 
 function makeDraggable(element, handle) {
     let isDragging = false;
@@ -6589,6 +7033,7 @@ document.addEventListener('DOMContentLoaded', () => {
     applyThemeColor();
     initDrawingCanvas();
     loadState();
+    initiateButtons();
 });
 
 window.addEventListener('resize', () => {
@@ -6646,6 +7091,10 @@ document.addEventListener('keydown', (e) => {
     else if(e.ctrlKey && e.key === 'z'){
         e.preventDefault();
         showZoom();
+    }
+    else if(e.ctrlKey && e.key === 'i'){
+        e.preventDefault();
+        createChatInput();
     }
 
     if (e.key === 'F12') {
@@ -6768,6 +7217,15 @@ btnSettings.addEventListener('click', () => {
         <option value="perplexity" ${defaultSearchEngine==='perplexity'?'selected':''}>Perplexity</option>
       </select>
     </div>
+
+    <div class="form-group">
+        <label for="enableAISelectSidebar">Enable AI:</label>
+        <select id="enableAISelectSidebar">
+            <option value="AIdisabled" ${defaultAIOption==='AIdisabled'?'selected':''}>Disabled</option>
+            <option value="AIenabled" ${defaultAIOption==='AIenabled'?'selected':''}>Enabled</option>
+        </select>
+    </div>
+
     <div class="form-group">
       <button class="modal-button modal-button-secondary" id="btnClearHistorySidebar">Clear Browsing History</button>
     </div>
@@ -6786,8 +7244,17 @@ btnSettings.addEventListener('click', () => {
   document.getElementById('btnSaveSettingsSidebar').onclick = () => {
     defaultStartPage = document.getElementById('startPageInputSidebar').value.trim() || 'https://www.google.com';
     defaultSearchEngine = document.getElementById('searchEngineSelectSidebar').value;
+    defaultAIOption = document.getElementById('enableAISelectSidebar').value.trim();
+
+    defaultBeforeAIOption = localStorage.getItem('defaultAIOption');
+    
+    if(defaultAIOption != defaultBeforeAIOption){
+        showMessage("Restart your Board Browser to Enable or Disable AI functions!",10000);
+    }
+
     localStorage.setItem('startPage', defaultStartPage);
     localStorage.setItem('searchEngine', defaultSearchEngine);
+    localStorage.setItem('defaultAIOption',defaultAIOption);
     closeSidebar();
   };
 });
