@@ -33,7 +33,8 @@
     "files": [
       "main.js",
       "index.html",
-      "package.json"
+      "package.json",
+      "icons/"
     ],
     "win": {
       "target": "nsis",

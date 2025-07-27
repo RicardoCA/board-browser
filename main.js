@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, nativeImage } = require('electron');
 const path = require('path');
 
 function createWindow() {
@@ -48,7 +48,12 @@ function createWindow() {
   });
 });
 
-
+  ipcMain.on('change-app-icon', (event, iconPath) => {
+    const icon = nativeImage.createFromPath(path.join(__dirname, iconPath));
+    if (win) {
+        win.setIcon(icon);
+    }
+  });
 
 
   // Handler para enviar lista de downloads para o renderer

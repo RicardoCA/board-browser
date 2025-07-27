@@ -2007,6 +2007,47 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     transition: all 0.2s ease;
     flex-shrink: 0;
 }
+
+.icons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 15px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.icon-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+
+.icon-option:hover {
+    background-color: #444;
+}
+
+.icon-option.selected {
+    background-color: var(--theme-color);
+}
+
+.icon-preview {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    margin-bottom: 8px;
+}
+
+.icon-name {
+    color: white;
+    font-size: 12px;
+    text-align: center;
+    word-break: break-word;
+}
 </style>
 
 </head>
@@ -2114,6 +2155,21 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
     <span id="zoom-level">100%</span>
     <button id="reset-zoom">⟲</button>
   </div>
+
+
+  <div class="modal-overlay" id="iconModal">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Change App Icon</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="icons-grid" id="iconsGrid">
+                    <!-- Ícones serão adicionados dinamicamente aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
 
   
   
@@ -2534,6 +2590,9 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
 
 <script>
 let VERSION = 'Beta 2.0'
+let apiKey = '';
+
+
 let firstUseDate = localStorage.getItem('firstUseDate');
 if (!firstUseDate) {
   firstUseDate = new Date().toISOString();
@@ -2638,8 +2697,83 @@ const btnCard = document.getElementById('btnCard');
 const saveCardBtn = document.getElementById('saveCardBtn');
 
 const exportChatBtn = document.getElementsByClassName("export-chat")[0];
+let selectedIcon = localStorage.getItem('appIcon') || 'default.png';
+
+
+const iconModal = document.getElementById('iconModal');
+const iconsGrid = document.getElementById('iconsGrid');
+const availableIcons = [
+    'default.png',
+    'icon1.png',
+    'icon2.png',
+    'icon3.png'
+];
+
 
 let chatInputDraggable = null;
+
+
+function loadIconModal() {
+    iconsGrid.innerHTML = '';
+    
+    availableIcons.forEach(icon => {
+        const iconOption = document.createElement('div');
+        iconOption.classList.add('icon-option');
+        if (icon === selectedIcon) {
+            iconOption.classList.add('selected');
+        }
+        iconOption.dataset.icon = icon;
+        
+        iconOption.innerHTML = `
+            <img src="icons/${icon}" class="icon-preview" alt="${icon}">
+            <div class="icon-name">${icon.replace('.png', '')}</div>
+        `;
+        
+        iconOption.addEventListener('click', () => {
+            // Remove a seleção de todos os ícones
+            document.querySelectorAll('.icon-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Adiciona seleção ao ícone clicado
+            iconOption.classList.add('selected');
+            selectedIcon = icon;
+            
+            // Salva no localStorage
+            localStorage.setItem('appIcon', icon);
+            
+            // Atualiza o ícone da janela
+            updateAppIcon(icon);
+            
+            // Fecha o modal após 1 segundo (opcional)
+            setTimeout(() => {
+                iconModal.style.display = 'none';
+            }, 1000);
+        });
+        
+        iconsGrid.appendChild(iconOption);
+    });
+}
+
+// Função para atualizar o ícone do aplicativo
+function updateAppIcon(iconName) {
+    const { ipcRenderer } = require('electron');
+    ipcRenderer.send('change-app-icon', `icons/${iconName}`);
+}
+
+
+
+// Fechar modal ao clicar no overlay
+iconModal.addEventListener('click', (e) => {
+    if (e.target === iconModal) {
+        iconModal.style.display = 'none';
+    }
+});
+
+// Fechar modal com o botão de fechar
+iconModal.querySelector('.close-modal').addEventListener('click', () => {
+    iconModal.style.display = 'none';
+});
 
 
 exportChatBtn.addEventListener('click',() =>{
@@ -2803,8 +2937,6 @@ function addMessage(text, sender) {
 // Enviar para a API da Groq
 async function sendToGroq(message) {
     try {
-        
-        const apiKey = '';
         
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
@@ -7034,6 +7166,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initDrawingCanvas();
     loadState();
     initiateButtons();
+    if (selectedIcon) {
+        updateAppIcon(selectedIcon);
+    }
 });
 
 window.addEventListener('resize', () => {
@@ -7227,12 +7362,21 @@ btnSettings.addEventListener('click', () => {
     </div>
 
     <div class="form-group">
+        <button class="modal-button modal-button-secondary" id="btnChangeIcon">Change App Icon</button>
+    </div>
+
+    <div class="form-group">
       <button class="modal-button modal-button-secondary" id="btnClearHistorySidebar">Clear Browsing History</button>
     </div>
     <div class="modal-footer">
       <button class="modal-button modal-button-primary" id="btnSaveSettingsSidebar">Save</button>
     </div>
   `);
+  document.getElementById('btnChangeIcon').onclick = () => {
+    loadIconModal();
+    iconModal.style.display = 'flex';
+  };
+
   document.getElementById('btnClearHistorySidebar').onclick = async () => {
     const confirmed = await showConfirm('Are you sure you want to clear the browsing history?');
     if (confirmed) {
@@ -7241,6 +7385,9 @@ btnSettings.addEventListener('click', () => {
       showMessage('Browsing history cleared.');
     }
   };
+
+
+
   document.getElementById('btnSaveSettingsSidebar').onclick = () => {
     defaultStartPage = document.getElementById('startPageInputSidebar').value.trim() || 'https://www.google.com';
     defaultSearchEngine = document.getElementById('searchEngineSelectSidebar').value;
