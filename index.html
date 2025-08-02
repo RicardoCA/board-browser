@@ -61,6 +61,9 @@
         <button id="btnCreateTab">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-earth-icon lucide-earth"><path d="M21.54 15H17a2 2 0 0 0-2 2v4.54"/><path d="M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17"/><path d="M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05"/><circle cx="12" cy="12" r="10"/></svg>
             New Webview</button>
+        <button id="btnCreateTabAnon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-earth-lock-icon lucide-earth-lock"><path d="M7 3.34V5a3 3 0 0 0 3 3"/><path d="M11 21.95V18a2 2 0 0 0-2-2 2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05"/><path d="M21.54 15H17a2 2 0 0 0-2 2v4.54"/><path d="M12 2a10 10 0 1 0 9.54 13"/><path d="M20 6V4a2 2 0 1 0-4 0v2"/><rect width="8" height="5" x="14" y="6" rx="1"/></svg>
+            New P. Webview</button>
         <button id="btnCreateTextField">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-type-icon lucide-file-type"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M9 13v-1h6v1"/><path d="M12 12v6"/><path d="M11 18h2"/></svg>
             Text field</button>
@@ -546,7 +549,7 @@
   </div>
 
 <script>
-let VERSION = 'Beta 2.0'
+let VERSION = 'Beta 3.0'
 let apiKey = '';
 
 
@@ -562,6 +565,7 @@ const desktop = document.getElementById('desktop');
 const btnNewTab = document.getElementById('btnNewTab');
 const dropdownMenu = document.getElementById('dropdown-menu');
 const btnCreateTab = document.getElementById('btnCreateTab');
+const btnCreataTabAnon = document.getElementById('btnCreateTabAnon');
 const btnCreateTextField = document.getElementById('btnCreateTextField');
 const btnCreateList = document.getElementById('btnCreateList');
 const btnCreateBoard = document.getElementById('btnCreateBoard');
@@ -2693,6 +2697,11 @@ btnCreateTab.addEventListener('click', () => {
     dropdownMenu.style.display = 'none';
 });
 
+btnCreateTabAnon.addEventListener('click', () => {
+    createTabAnonima();
+    dropdownMenu.style.display = 'none';
+});
+
 btnCreateTextField.addEventListener('click', () => {
     createTextField();
     dropdownMenu.style.display = 'none';
@@ -3181,59 +3190,60 @@ function saveState() {
             activeTabId: board.activeTabId,
             activeTextFieldId: board.activeTextFieldId,
             activeListId: board.activeListId,
-            tabs: board.tabs.map(tab => ({
-                id: tab.id,
-                url: tab.webview.src,
-                position: {
-                    top: tab.tabFrame.style.top,
-                    left: tab.tabFrame.style.left,
-                    zIndex: tab.tabFrame.style.zIndex
-                },
-                size: {
-                    width: tab.tabFrame.style.width,
-                    height: tab.tabFrame.style.height
-                },
-                maximized: tab.tabFrame.classList.contains('maximized-tab')
-            })),
+            tabs: board.tabs
+                .filter(tab => !tab.anonima)  // Only include tabs where isAnonymous is false
+                .map(tab => ({
+                    id: tab.id,
+                    url: tab.webview.src,
+                    position: {
+                        top: tab.tabFrame.style.top,
+                        left: tab.tabFrame.style.left,
+                        zIndex: tab.tabFrame.style.zIndex
+                    },
+                    size: {
+                        width: tab.tabFrame.style.width,
+                        height: tab.tabFrame.style.height
+                    },
+                    maximized: tab.tabFrame.classList.contains('maximized-tab')
+                })),
             textFields: board.textFields.map(textField => ({
                 id: textField.id,
                 content: textField.textarea.value,
                 title: textField.textFieldFrame.querySelector('.title-section').value,
-                                                           position: {
-                                                               top: textField.textFieldFrame.style.top,
-                                                               left: textField.textFieldFrame.style.left,
-                                                               zIndex: textField.textFieldFrame.style.zIndex
-                                                           },
-                                                           size: {
-                                                               width: textField.textFieldFrame.style.width,
-                                                               height: textField.textFieldFrame.style.height
-                                                           },
-                                                           maximized: textField.textFieldFrame.classList.contains('maximized-textfield')
+                position: {
+                    top: textField.textFieldFrame.style.top,
+                    left: textField.textFieldFrame.style.left,
+                    zIndex: textField.textFieldFrame.style.zIndex
+                },
+                size: {
+                    width: textField.textFieldFrame.style.width,
+                    height: textField.textFieldFrame.style.height
+                },
+                maximized: textField.textFieldFrame.classList.contains('maximized-textfield')
             })),
             lists: board.lists.map(list => ({
                 id: list.id,
                 title: list.listFrame.querySelector('.title-section').value,
-                                            items: Array.from(list.listContent.querySelectorAll('.list-item')).map(item => ({
-                                                checked: item.querySelector('input[type="checkbox"]').checked,
-                                                                                                                            text: item.querySelector('input[type="text"]').value
-                                            })),
-                                            position: {
-                                                top: list.listFrame.style.top,
-                                                left: list.listFrame.style.left,
-                                                zIndex: list.listFrame.style.zIndex
-                                            },
-                                            size: {
-                                                width: list.listFrame.style.width,
-                                                height: list.listFrame.style.height
-                                            },
-                                            maximized: list.listFrame.classList.contains('maximized-list')
+                items: Array.from(list.listContent.querySelectorAll('.list-item')).map(item => ({
+                    checked: item.querySelector('input[type="checkbox"]').checked,
+                    text: item.querySelector('input[type="text"]').value
+                })),
+                position: {
+                    top: list.listFrame.style.top,
+                    left: list.listFrame.style.left,
+                    zIndex: list.listFrame.style.zIndex
+                },
+                size: {
+                    width: list.listFrame.style.width,
+                    height: list.listFrame.style.height
+                },
+                maximized: list.listFrame.classList.contains('maximized-list')
             }))
         };
     });
 
     localStorage.setItem('browserState', JSON.stringify(state));
 }
-
 function loadState() {
     const savedState = localStorage.getItem('browserState');
     if (!savedState) {
@@ -3453,9 +3463,7 @@ function closeBoard(boardId) {
     saveState();
 }
 
-
-
-function createTab(url = defaultStartPage, savedState = null, targetBoardId = null){
+function createTabAnonima(url = defaultStartPage, savedState = null, targetBoardId = null){
     const boardId = targetBoardId || currentBoardId;
     if (!boardId || !boards[boardId]) return;
 
@@ -3532,6 +3540,7 @@ function createTab(url = defaultStartPage, savedState = null, targetBoardId = nu
     content.classList.add('tab-content');
 
     const webview = document.createElement('webview');
+    
 
     let isAdBlockerActive = false;
     const btnCopyElements = header.querySelector('.btn-copy-elements');
@@ -3905,7 +3914,10 @@ btnAdBlocker.addEventListener('click', (e) => {
 
     webview.src = savedState ? savedState.url : url;
     webview.setAttribute('allowpopups', '');
-    webview.setAttribute('partition', 'persist:trusted');
+    webview.setAttribute('partition', 'anon_' + Date.now());
+    
+    
+
     webview.setAttribute('webpreferences', 'clipboard-read=yes, clipboard-write=yes');
     webview.style.background = 'white';
 
@@ -4296,7 +4308,868 @@ btnAdBlocker.addEventListener('click', (e) => {
         }
     });
 
-    boards[boardId].tabs.push({ id, tabFrame, webview, minimized: false, url: savedState ? savedState.url : url });
+    boards[boardId].tabs.push({ id, tabFrame, webview, minimized: false, url: savedState ? savedState.url : url, anonima: true });
+
+    if (savedState?.maximized) {
+        maximizeTab(id);
+    }
+
+    if (boardId !== currentBoardId) {
+        tabFrame.style.display = 'none';
+    }
+
+    updatePinButton();
+
+    return id;
+}
+
+
+function createTab(url = defaultStartPage, savedState = null, targetBoardId = null){
+    const boardId = targetBoardId || currentBoardId;
+    if (!boardId || !boards[boardId]) return;
+
+    const id = savedState ? savedState.id : ++tabIdCounter;
+    if (!savedState) tabIdCounter = Math.max(tabIdCounter, id);
+
+    const tabFrame = document.createElement('div');
+    tabFrame.classList.add('tab-frame');
+
+    if (savedState) {
+        tabFrame.style.top = savedState.position.top || '50px';
+        tabFrame.style.left = savedState.position.left || '50px';
+        tabFrame.style.zIndex = savedState.position.zIndex || (100 + id);
+        tabFrame.style.width = '600px';
+        tabFrame.style.height = '400px';
+        if (savedState.maximized) {
+            //tabFrame.classList.add('maximized-tab');
+        }
+    } else {
+        tabFrame.style.top = '50px';
+        tabFrame.style.left = (50 + boards[boardId].tabs.length * 30) + 'px';
+        tabFrame.style.zIndex = 100 + id;
+        tabFrame.style.width = '600px';
+        tabFrame.style.height = '400px';
+    }
+
+    tabFrame.dataset.id = id;
+
+    const header = document.createElement('div');
+    header.classList.add('tab-header');
+    header.innerHTML = `
+    <div class="url-section">
+    <input type="url" placeholder="Input the URL or Search..." />
+    <div class="suggestions-box"></div>
+    </div>
+    <div class="controls">
+    <button title="Ad Blocker" class="btn-ad-blocker">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-icon lucide-shield"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+    </button>
+    <button title="Copy Elements" class="btn-copy-elements">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-icon lucide-copy"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    </button>
+    <button title="Edit as HTML" class="btn-edit-html">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-code-xml-icon lucide-code-xml"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+    </button>
+    <button title="Back" class="btn-back">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-reply-icon lucide-reply"><path d="M20 18v-2a4 4 0 0 0-4-4H4"/><path d="m9 17-5-5 5-5"/></svg>
+    </button>
+    <button title="Forward" class="btn-forward">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-forward-icon lucide-forward"><path d="m15 17 5-5-5-5"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg>
+    </button>
+    <button title="Refresh" class="btn-refresh">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rotate-ccw-icon lucide-rotate-ccw"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+    </button>
+    <button title="Pin/Unpin" class="btn-pin">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-star-icon lucide-star"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>
+    </button>
+    <div class="move-to-board-container">
+    <button class="btn-move-to-board" title="Move to another board">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-move3d-icon lucide-move-3d"><path d="M5 3v16h16"/><path d="m5 19 6-6"/><path d="m2 6 3-3 3 3"/><path d="m18 16 3 3-3 3"/></svg>
+    </button>
+    <div class="move-to-board-menu"></div>
+    </div>
+    <button title="Change size" class="btn-maximize"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-maximize2-icon lucide-maximize-2"><path d="M15 3h6v6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/><path d="M9 21H3v-6"/></svg>
+    </button>
+    <button title="Close" class="btn-close"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x-icon lucide-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+    </div>
+    `;
+
+    tabFrame.appendChild(header);
+
+    const content = document.createElement('div');
+    content.classList.add('tab-content');
+
+    const webview = document.createElement('webview');
+    
+
+    let isAdBlockerActive = false;
+    const btnCopyElements = header.querySelector('.btn-copy-elements');
+
+    function removeBlankTargets() {
+        return `
+        (function() {
+            function removeBlankTargetsFromLinks() {
+                const links = document.querySelectorAll('a[target="_blank"]');
+                links.forEach(link => {
+                    link.removeAttribute('target');
+                });
+            }
+
+            // Executa imediatamente
+            removeBlankTargetsFromLinks();
+            
+            // Observa mudanças no DOM para links dinâmicos
+            const observer = new MutationObserver(removeBlankTargetsFromLinks);
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        })();
+        `;
+    }
+
+
+    const getAdBlockRules = () => {
+    return `
+    (function() {
+        const adSelectors = [
+            // Seletores gerais de anúncios
+            '[class*="ad-"]', '[class*="ads-"]', '[class*="advertisement"]',
+            '[id*="ad-"]', '[id*="ads-"]', '[id*="advertisement"]',
+            '.ad', '.ads', '.advertisement', '.banner', '.popup',
+            '[class*="-ad"]', '[id*="-ad"]', // Para padrões como "mid-ad", "right-ad"
+            '.ad-unit', '.ad-placeholder', '.ad-label',
+            '.ad-slot', '.ad-area', '.ad-zone',
+            '.advert', '.advertising', '.ad-container',
+            '.ad-wrapper', '.ad-banner', '.ad-box',
+            '.ad-link', '.ad-text', '.ad-image',
+            '.advertorial', '.sponsored-post', '.promoted-content',
+            '.paid-content', '.ad-wall', '.ad-sticky',
+            '.ad-popup', '.ad-overlay', '.ad-interstitial',
+            // Redes de anúncios específicas
+            '.taboola', '.outbrain', '.revcontent',
+            '.adform', '.adtech', '.doubleclick',
+            '.google-ads', '.adsense', '.adchoices',
+            // Elementos de vídeo
+            '.video-ads', '.preroll', '.midroll',
+            '.postroll', '.ad-break', '.ad-skip',
+            
+            // Seletores específicos para sites de notícias
+            '.adsbygoogle', '.google-ads', '.googlesyndication',
+            '.ad-container', '.ad-wrapper', '.ad-banner', '.ad-slot',
+            '.sponsored', '.sponsored-content', '.promotion',
+            'adservice.google.com', 'pagead2.googlesyndication.com',
+            'securepubads.g.doubleclick.net', 'ads.pubmatic.com',
+            'adsrvr.org', 'criteo.com', 'adnxs.com',
+            'amazon-adsystem.com', 'adsystem.com', 'advertising.com',
+            'adroll.com', 'zemanta.com', 'quantserve.com',
+            'scorecardresearch.com', 'rlcdn.com', 'bluekai.com',
+            'agkn.com', 'mathtag.com', 'tapad.com',
+            'advertising.amazon.com', 'ads.yahoo.com', 'ads.bing.com',
+            'ads.facebook.com', 'an.yandex.ru', 'ads.tiktok.com',
+            'ads.twitter.com', 'ads.linkedin.com', 'ads.reddit.com',
+            
+            // YouTube específico
+            '.ytp-ad-module', '.video-ads', '.ytp-ad-overlay-container',
+            '.ytp-ad-text-overlay', '.ytp-ad-player-overlay',
+            '.masthead-ad-control', '.ytd-promoted-sparkles-web-renderer',
+            '.ytd-compact-promoted-video-renderer', '.ytd-promoted-video-renderer',
+            '.ytd-display-ad-renderer', '.ytd-video-masthead-ad-advertiser-info-renderer',
+            
+            // Outros sites comuns
+            '.sidebar-ad', '.header-ad', '.footer-ad', '.inline-ad',
+            '.native-ad', '.content-ad', '.video-ad', '.display-ad',
+            '.square-ad', '.leaderboard-ad', '.skyscraper-ad',
+            
+            // Termos em outros idiomas
+            '[class*="publicidade"]', '[class*="anuncio"]', '[class*="reclame"]',
+            '[id*="publicidade"]', '[id*="anuncio"]', '[id*="reclame"]'
+        ];
+        
+        const adDomains = [
+            'googlesyndication.com', 'googleadservices.com', 'doubleclick.net',
+            'googletagmanager.com', 'google-analytics.com', 'googletagservices.com',
+            'facebook.com/tr', 'connect.facebook.net', 'amazon-adsystem.com',
+            'adsystem.amazon.com', 'outbrain.com', 'taboola.com',
+            'criteo.com', 'adsrvr.org', 'rubiconproject.com',
+            'pubmatic.com', 'openx.com', 'adsafeprotected.com'
+        ];
+        
+        function removeAds() {
+            // Remove elementos por seletores
+            adSelectors.forEach(selector => {
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(el => {
+                        el.style.display = 'none !important';
+                        el.style.visibility = 'hidden !important';
+                        el.style.opacity = '0 !important';
+                        el.style.height = '0 !important';
+                        el.style.width = '0 !important';
+                    });
+                } catch(e) {}
+            });
+            
+            // Remove iframes e scripts de anúncios
+            const iframes = document.querySelectorAll('iframe');
+            iframes.forEach(iframe => {
+                if (iframe.src) {
+                    const src = iframe.src.toLowerCase();
+                    if (adDomains.some(domain => src.includes(domain)) || 
+                        src.includes('ad') || src.includes('banner') || src.includes('popup')) {
+                        iframe.style.display = 'none !important';
+                        iframe.remove();
+                    }
+                }
+            });
+            
+            // Remove scripts de anúncios
+            const scripts = document.querySelectorAll('script');
+            scripts.forEach(script => {
+                if (script.src) {
+                    const src = script.src.toLowerCase();
+                    if (adDomains.some(domain => src.includes(domain))) {
+                        script.remove();
+                    }
+                }
+            });
+            
+            // YouTube específico - remove anúncios em vídeos
+            const ytAds = document.querySelectorAll('.ytp-ad-skip-button, .ytp-ad-skip-button-modern');
+            ytAds.forEach(skipBtn => {
+                if (skipBtn.style.display !== 'none') {
+                    skipBtn.click();
+                }
+            });
+            
+            // Remove overlay de anúncios
+            const overlays = document.querySelectorAll('[class*="overlay"]');
+            overlays.forEach(overlay => {
+                const text = overlay.textContent.toLowerCase();
+                if (text.includes('ad') || text.includes('anúncio') || text.includes('publicidade')) {
+                    overlay.style.display = 'none !important';
+                }
+            });
+        }
+        
+        // Executa imediatamente
+        removeAds();
+        
+        // Observa mudanças no DOM
+        const observer = new MutationObserver(() => {
+            removeAds();
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class', 'id', 'src']
+        });
+        
+        // Executa periodicamente para pegar anúncios dinâmicos
+        setInterval(removeAds, 2000);
+        
+        // Bloqueia requisições de anúncios
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            const url = args[0];
+            if (typeof url === 'string' && adDomains.some(domain => url.includes(domain))) {
+                return Promise.reject(new Error('Blocked by ad blocker'));
+            }
+            return originalFetch.apply(this, args);
+        };
+        
+        // Bloqueia XMLHttpRequest de anúncios
+        const originalXHR = window.XMLHttpRequest.prototype.open;
+        window.XMLHttpRequest.prototype.open = function(method, url) {
+            if (typeof url === 'string' && adDomains.some(domain => url.includes(domain))) {
+                return;
+            }
+            return originalXHR.apply(this, arguments);
+        };
+        
+        console.log('Ad Blocker ativado');
+    })();
+    `;
+};
+
+webview.addEventListener('did-finish-load', () => {
+    webview.executeJavaScript(removeBlankTargets()).catch(err => {
+        console.error('Failed to remove blank targets:', err);
+    });
+});
+
+const btnAdBlocker = header.querySelector('.btn-ad-blocker');
+
+// Event listener para o botão de ad blocker
+btnAdBlocker.addEventListener('click', (e) => {
+    e.stopPropagation();
+    isAdBlockerActive = !isAdBlockerActive;
+    btnAdBlocker.classList.toggle('active');
+    
+    try {
+        if (isAdBlockerActive) {
+            // Ativa o ad blocker
+            webview.executeJavaScript(getAdBlockRules()).catch(err => {
+                console.error('Failed to activate ad blocker:', err);
+                isAdBlockerActive = false;
+                btnAdBlocker.classList.remove('active');
+            });
+            
+            btnAdBlocker.title = 'Disable Ad Blocker';
+            btnAdBlocker.style.color = '#4CAF50';
+            webview.reload();
+        } else {
+            // Desativa o ad blocker (recarrega a página)
+            webview.reload();
+            btnAdBlocker.title = 'Ad Blocker';
+            btnAdBlocker.style.color = '';
+        }
+    } catch (err) {
+        console.error('Error toggling ad blocker:', err);
+        isAdBlockerActive = false;
+        btnAdBlocker.classList.remove('active');
+    }
+});
+
+
+
+    // Event listener para o botão de cópia - CORRIGIDO
+    btnCopyElements.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isCopyModeActive = !isCopyModeActive;
+        btnCopyElements.classList.toggle('active');
+
+        try {
+            if (isCopyModeActive) {
+                // Ativando modo cópia
+                webview.executeJavaScript(`
+                try {
+                    // Limpa qualquer listener anterior
+                    if (window.copyModeHandler) {
+                        document.body.removeEventListener('click', window.copyModeHandler, true);
+                        delete window.copyModeHandler;
+                    }
+
+                    // Define o novo handler
+                    function copyModeHandler(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    let textToCopy = '';
+    if (e.target.href) {
+        textToCopy = e.target.href;
+    } else if (e.target.src) {
+        textToCopy = e.target.src;
+    } else {
+        const selection = window.getSelection();
+        if (selection && selection.toString().trim() !== '') {
+            textToCopy = selection.toString();
+        } else {
+            return;
+        }
+    }
+
+    // Método moderno com fallback
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            console.log('Copied to clipboard:', textToCopy);
+            window.postMessage({ type: 'copyCompleted' }, '*');
+        }).catch(err => {
+            // Fallback para método antigo se o moderno falhar
+            fallbackCopyTextToClipboard(textToCopy);
+        });
+    } else {
+        fallbackCopyTextToClipboard(textToCopy);
+    }
+}
+
+
+                    // Armazena o handler globalmente e adiciona o listener
+                    window.copyModeHandler = copyModeHandler;
+                    document.body.addEventListener('click', copyModeHandler, true);
+
+                    // Muda o cursor para indicar modo cópia
+                    document.body.style.cursor = 'copy';
+                    const interactiveElements = document.querySelectorAll('a, img, button, input, [contenteditable]');
+                    interactiveElements.forEach(el => {
+                        el.style.cursor = 'copy';
+                    });
+
+                } catch(e) {
+                    console.error('Error activating copy mode:', e);
+                }
+                `).catch(err => {
+                    console.error('Failed to activate copy mode:', err);
+                    isCopyModeActive = false;
+                    btnCopyElements.classList.remove('active');
+                });
+
+                //alert('Modo de cópia ativado. Clique em qualquer elemento para copiar seu conteúdo.');
+
+            } else {
+                // Desativando modo cópia
+                webview.executeJavaScript(`
+                try {
+                    // Remove o event listener do modo cópia
+                    if (window.copyModeHandler) {
+                        document.body.removeEventListener('click', window.copyModeHandler, true);
+                        delete window.copyModeHandler;
+                    }
+
+                    // Restaura o cursor padrão
+                    document.body.style.cursor = '';
+                    const interactiveElements = document.querySelectorAll('a, img, button, input, [contenteditable]');
+                    interactiveElements.forEach(el => {
+                        el.style.cursor = '';
+                    });
+
+                } catch(e) {
+                    console.error('Error deactivating copy mode:', e);
+                }
+                `).catch(err => {
+                    console.error('Failed to deactivate copy mode:', err);
+                });
+
+                //alert('Modo de cópia desativado!');
+            }
+
+        } catch (err) {
+            console.error('Error toggling copy mode:', err);
+            isCopyModeActive = false;
+            btnCopyElements.classList.remove('active');
+        }
+    });
+
+    // Listener para quando a cópia for completada
+    window.addEventListener('message', (e) => {
+        if (e.data.type === 'copyCompleted') {
+            isCopyModeActive = false;
+            btnCopyElements.classList.remove('active');
+
+            try {
+                webview.executeJavaScript(`
+                try {
+                    if (window.copyModeHandler) {
+                        document.body.removeEventListener('click', window.copyModeHandler, true);
+                        delete window.copyModeHandler;
+                    }
+                    document.body.style.cursor = '';
+                    const interactiveElements = document.querySelectorAll('a, img, button, input, [contenteditable]');
+                    interactiveElements.forEach(el => {
+                        el.style.cursor = '';
+                    });
+                } catch(e) {
+                    console.error('Error cleaning up copy mode after completion:', e);
+                }
+                `).catch(err => {
+                    console.error('Failed to clean up copy mode after completion:', err);
+                });
+            } catch (err) {
+                console.error('Error cleaning up copy mode after completion:', err);
+            }
+        }
+    });
+
+    webview.src = savedState ? savedState.url : url;
+    webview.setAttribute('allowpopups', '');
+    webview.setAttribute('partition', 'persist:trusted');
+    
+    
+
+    webview.setAttribute('webpreferences', 'clipboard-read=yes, clipboard-write=yes');
+    webview.style.background = 'white';
+
+    const applyChromeUserAgentIfNeeded = (currentUrl) => {
+        if (currentUrl.includes('web.whatsapp.com')) {
+            webview.setAttribute('useragent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36');
+        } else {
+            webview.removeAttribute('useragent'); // Volta ao user-agent padrão
+        }
+    };
+
+    // Aplica no carregamento inicial
+    applyChromeUserAgentIfNeeded(savedState ? savedState.url : url);
+
+    // Monitora alterações de URL (navegação dentro do webview)
+    webview.addEventListener('did-navigate', (e) => {
+        applyChromeUserAgentIfNeeded(e.url);
+        addToHistory(e.url);
+
+        if (isAdBlockerActive) {
+            setTimeout(() => {
+                webview.executeJavaScript(getAdBlockRules()).catch(err => {
+                    console.error('Failed to reapply ad blocker after navigation:', err);
+                });
+            }, 1000);
+        }
+
+    });
+
+    // Monitora redirecionamentos (como após login)
+    webview.addEventListener('did-navigate-in-page', (e) => {
+        if (e.isMainFrame) {
+            applyChromeUserAgentIfNeeded(e.url);
+        }
+
+        if (isAdBlockerActive) {
+            setTimeout(() => {
+                webview.executeJavaScript(getAdBlockRules()).catch(err => {
+                    console.error('Failed to reapply ad blocker after in-page navigation:', err);
+                });
+            }, 1000);
+        }
+    });
+
+    content.appendChild(webview);
+    tabFrame.appendChild(content);
+
+    addResizers(tabFrame);
+
+    desktop.appendChild(tabFrame);
+
+    const urlInput = header.querySelector('input[type="url"]');
+
+    const suggestionsBox = header.querySelector('.suggestions-box');
+
+    urlInput.addEventListener('input', (e) => {
+        const inputText = e.target.value.toLowerCase().trim();
+        suggestionsBox.innerHTML = '';
+
+        if (inputText.length === 0) {
+            suggestionsBox.style.display = 'none';
+            return;
+        }
+
+        // Combina histórico e favoritos em uma única lista, sem duplicatas
+        const favoriteUrls = favorites.map(fav => fav.url);
+        const allSources = [...new Set([...browsingHistory, ...favoriteUrls])];
+
+        const filtered = allSources.filter(item => item.toLowerCase().includes(inputText));
+
+        // Limita a 10 sugestões para não poluir a tela
+        const topResults = filtered.slice(0, 10);
+
+        if (topResults.length > 0) {
+            topResults.forEach(suggestionUrl => {
+                const item = document.createElement('div');
+                item.classList.add('suggestion-item');
+                item.textContent = suggestionUrl;
+                item.title = suggestionUrl; // Mostra URL completa no hover
+
+                // Evento de clique em uma sugestão
+                item.addEventListener('mousedown', (event) => {
+                    event.preventDefault(); // Previne que o input perca o foco antes do clique
+                    urlInput.value = suggestionUrl;
+                    webview.src = suggestionUrl;
+                    suggestionsBox.style.display = 'none';
+                    saveState();
+                });
+
+                suggestionsBox.appendChild(item);
+            });
+            suggestionsBox.style.display = 'block';
+        } else {
+            suggestionsBox.style.display = 'none';
+        }
+    });
+
+    // Esconde a caixa de sugestões quando o input perde o foco
+    urlInput.addEventListener('blur', () => {
+        // Usamos um pequeno timeout para permitir que o clique no item de sugestão seja registrado
+        setTimeout(() => {
+            suggestionsBox.style.display = 'none';
+        }, 150);
+    });
+
+    // Mostra a caixa de sugestões quando o input ganha foco e já tem texto
+    urlInput.addEventListener('focus', () => {
+        if (urlInput.value.trim().length > 0) {
+            // Dispara o evento 'input' para re-filtrar e mostrar as sugestões
+            urlInput.dispatchEvent(new Event('input'));
+        }
+    });
+    // **FIM DA LÓGICA DE SUGESTÕES**
+
+    const btnMaximize = header.querySelector('.btn-maximize');
+    const btnClose = header.querySelector('.btn-close');
+    const btnMoveToBoard = header.querySelector('.btn-move-to-board');
+    const moveToBoardMenu = header.querySelector('.move-to-board-menu');
+    const goBackBtn = header.querySelector('.btn-back');
+    const goForwardBtn = header.querySelector('.btn-forward');
+    const refreshBtn = header.querySelector('.btn-refresh');
+    const pinBtn = header.querySelector('.btn-pin');
+    const btnEditHtml = header.querySelector('.btn-edit-html');
+
+    btnEditHtml.addEventListener('click', async (e) => {
+        e.stopPropagation();
+
+        try {
+            // Obtém o HTML da página atual
+            const html = await webview.executeJavaScript(`
+            document.documentElement.outerHTML
+            `);
+
+            // Cria um novo campo de texto com o HTML
+            const textFieldId = createTextField({
+                content: html,
+                title: `HTML Export: ${webview.getTitle() || 'Untitled'}`,
+                                                position: {
+                                                    top: '100px',
+                                                    left: '100px',
+                                                    zIndex: 200 + textFieldIdCounter
+                                                },
+                                                size: {
+                                                    width: '800px',
+                                                    height: '600px'
+                                                }
+            }, currentBoardId);
+
+            // Adiciona um listener para atualizar o webview quando o texto for alterado
+            const textField = boards[currentBoardId].textFields.find(t => t.id === textFieldId);
+            const textarea = textField.textarea;
+
+            textarea.addEventListener('input', () => {
+                try {
+                    // Atualiza o webview com o novo HTML
+                    webview.executeJavaScript(`
+                    document.open();
+                    document.write(\`${textarea.value.replace(/`/g, '\\`')}\`);
+                    document.close();
+                    `);
+                } catch (error) {
+                    console.error('Error updating webview:', error);
+                }
+            });
+
+        } catch (error) {
+            console.error('Error exporting HTML:', error);
+            showMessage('Failed to export HTML. The page may have restrictions.');
+        }
+    });
+
+    function updatePinButton() {
+        if (isFavorite(webview.src)) {
+            pinBtn.classList.add('pinned');
+            pinBtn.title = 'Unpin from favorites';
+        } else {
+            pinBtn.classList.remove('pinned');
+            pinBtn.title = 'Pin to favorites';
+        }
+    }
+
+    pinBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const url = webview.src;
+
+        if (isFavorite(url)) {
+            removeFavorite(url);
+        } else {
+            addFavorite(url, document.title || new URL(url).hostname);
+        }
+
+        updatePinButton();
+    });
+
+    webview.addEventListener('did-navigate', (e) => {
+        urlInput.value = e.url;
+        updatePinButton();
+    });
+
+    webview.addEventListener('page-title-updated', (e) => {
+        if (isFavorite(webview.src)) {
+            const favIndex = favorites.findIndex(fav => fav.url === webview.src);
+            if (favIndex !== -1) {
+                favorites[favIndex].title = e.title;
+                saveFavorites();
+                updateFavoritesGrid();
+            }
+        }
+    });
+
+    function updateMoveToBoardMenu() {
+        moveToBoardMenu.innerHTML = '';
+
+        Object.keys(boards).forEach(targetBoardId => {
+            if (targetBoardId !== boardId) {
+                const button = document.createElement('button');
+                button.textContent = boards[targetBoardId].name;
+                button.addEventListener('click', () => {
+                    moveItemToBoard('tab', id, targetBoardId);
+                });
+                moveToBoardMenu.appendChild(button);
+            }
+        });
+    }
+
+    btnMoveToBoard.addEventListener('click', (e) => {
+        e.stopPropagation();
+        updateMoveToBoardMenu();
+        moveToBoardMenu.style.display = moveToBoardMenu.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!header.contains(e.target)) {
+            moveToBoardMenu.style.display = 'none';
+        }
+    });
+
+    makeDraggable(tabFrame, header);
+
+    // Event listener principal do tabFrame - CORRIGIDO
+    tabFrame.addEventListener('click', (e) => {
+        // Verifica se o clique foi no botão de cópia - se sim, não desativa
+        if (e.target.closest('.btn-copy-elements')) {
+            return;
+        }
+
+        // Se o modo cópia estiver ativo e o clique não foi no botão, desativa
+        if (isCopyModeActive) {
+            isCopyModeActive = false;
+            btnCopyElements.classList.remove('active');
+
+            try {
+                webview.executeJavaScript(`
+                try {
+                    if (window.copyModeHandler) {
+                        document.body.removeEventListener('click', window.copyModeHandler, true);
+                        delete window.copyModeHandler;
+                    }
+                    document.body.style.cursor = '';
+                    const interactiveElements = document.querySelectorAll('a, img, button, input, [contenteditable]');
+                    interactiveElements.forEach(el => {
+                        el.style.cursor = '';
+                    });
+                } catch(e) {
+                    console.error('Error disabling copy mode from tab click:', e);
+                }
+                `).catch(err => {
+                    console.error('Failed to disable copy mode from tab click:', err);
+                });
+            } catch (err) {
+                console.error('Error disabling copy mode from tab click:', err);
+            }
+            return;
+        }
+
+        // Resto da lógica original do clique no tab...
+        if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT' || e.target.classList.contains('resizer')) return;
+
+        removeAllFocus();
+        tabFrame.classList.add('focused');
+        urlInput.style.display = 'block';
+        urlInput.value = webview.src || url;
+        urlInput.focus();
+        urlInput.select();
+
+        boards[boardId].activeTabId = id;
+        boards[boardId].activeTextFieldId = null;
+        boards[boardId].activeListId = null;
+        activeTabId = id;
+        activeTextFieldId = null;
+        activeListId = null;
+
+        saveState();
+    });
+
+    urlInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            let newUrl = urlInput.value.trim();
+            if (newUrl && !newUrl.includes('.') && !newUrl.startsWith('http')) {
+                switch (defaultSearchEngine) {
+                    case 'google':
+                        newUrl = `https://www.google.com/search?q=${encodeURIComponent(newUrl)}`;
+                        break;
+                    case 'duckduckgo':
+                        newUrl = `https://duckduckgo.com/?q=${encodeURIComponent(newUrl)}`;
+                        break;
+                    case 'bing':
+                        newUrl = `https://www.bing.com/search?q=${encodeURIComponent(newUrl)}`;
+                        break;
+                    case 'perplexity':
+                        newUrl = `https://www.perplexity.ai/?q=${encodeURIComponent(newUrl)}`;
+                        break;
+                    case 'chatgpt':
+                        newUrl = `https://chatgpt.com/?q=${encodeURIComponent(newUrl)}`;
+                        break;
+                }
+            } else if (!newUrl.startsWith('http')) {
+                newUrl = 'https://' + newUrl;
+            }
+
+            if (newUrl) {
+                webview.src = newUrl;
+                tabFrame.classList.remove('focused');
+                saveState();
+            }
+        }
+    });
+
+    urlInput.addEventListener('blur', () => {
+        setTimeout(() => {
+            tabFrame.classList.remove('focused');
+        }, 100);
+    });
+
+    btnClose.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeTab(id);
+        saveState();
+    });
+
+    refreshBtn.addEventListener('click', (e) => {
+        webview.reload();
+    });
+
+    goForwardBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        try {
+            if(webview.canGoForward()){
+                webview.goForward();
+            }
+        } catch(error) {}
+    });
+
+    goBackBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        try {
+            if(webview.canGoBack()){
+                webview.goBack();
+            }
+        } catch(error) {}
+    });
+
+    btnMaximize.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const tab = boards[boardId].tabs.find(t => t.id === id);
+        if (tab.tabFrame.classList.contains('maximized-tab')) {
+            tab.tabFrame.classList.remove('maximized-tab');
+            tab.tabFrame.style.top = savedState?.position?.top || '50px';
+            tab.tabFrame.style.left = savedState?.position?.left || '50px';
+            tab.tabFrame.style.width = '600px';
+            tab.tabFrame.style.height = '400px';
+            tab.tabFrame.style.borderRadius = '8px';
+            tab.tabFrame.style.boxShadow = '0 0 15px rgba(0,0,0,0.7)';
+            tab.tabFrame.style.zIndex = savedState?.position?.zIndex || (100 + id);
+        } else {
+            maximizeTab(id);
+        }
+        saveState();
+    });
+
+    tabFrame.addEventListener('wheel', e => {
+        if (e.ctrlKey) {
+            e.preventDefault();
+            let zoom = webview.getZoomFactor();
+            zoom += e.deltaY * -0.0015;
+            zoom = Math.min(Math.max(zoom, 0.25), 3);
+            webview.setZoomFactor(zoom);
+        }
+    });
+
+    boards[boardId].tabs.push({ id, tabFrame, webview, minimized: false, url: savedState ? savedState.url : url, anonima: false });
 
     if (savedState?.maximized) {
         maximizeTab(id);
