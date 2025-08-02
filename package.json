@@ -1,6 +1,6 @@
 {
   "name": "BoardBrowser",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Um navegador estilo Quadro com abas minimizáveis e arrastáveis",
   "main": "main.js",
   "scripts": {
