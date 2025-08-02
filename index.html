@@ -778,9 +778,26 @@ function removeElementsByClass(className) {
 
 
 function createChatInput() {
-    if (chatInputDraggable){
-        removeElementsByClass("chat-input-container");
-        chatInputDraggable = null;
+    if (chatInputDraggable) {
+        // Animação de explosão ao remover
+        const chatRect = chatInputDraggable.getBoundingClientRect();
+        const centerX = chatRect.left + chatRect.width / 2;
+        const centerY = chatRect.top + chatRect.height / 2;
+        
+        // Aplica animação de explosão
+        chatInputDraggable.style.transformOrigin = 'center';
+        chatInputDraggable.style.animation = 'explode 0.3s ease-out forwards';
+        
+        // Cria partículas de fumaça
+        for (let i = 0; i < 10; i++) {
+            createSmokeParticle(centerX, centerY);
+        }
+        
+        // Remove após a animação
+        setTimeout(() => {
+            removeElementsByClass("chat-input-container");
+            chatInputDraggable = null;
+        }, 300);
         return;
     }
     
@@ -791,10 +808,12 @@ function createChatInput() {
         <button><i data-lucide="send"></i></button>
     `;
     
-    // Posição inicial
+    // Posição inicial com animação de entrada
     chatInputDraggable.style.left = '20px';
     chatInputDraggable.style.top = '60px';
-    
+    chatInputDraggable.style.opacity = '0';
+    chatInputDraggable.style.transform = 'scale(0.5)';
+    chatInputDraggable.style.animation = 'fadeInScale 0.3s ease-out forwards';
 
     document.body.appendChild(chatInputDraggable);
     lucide.createIcons();
@@ -4254,8 +4273,36 @@ btnAdBlocker.addEventListener('click', (e) => {
 
     btnClose.addEventListener('click', (e) => {
         e.stopPropagation();
-        closeTab(id);
-        saveState();
+        
+        // Animação de explosão
+        const tabRect = tabFrame.getBoundingClientRect();
+        const centerX = tabRect.left + tabRect.width / 2;
+        const centerY = tabRect.top + tabRect.height / 2;
+        
+        // Aplica animação de explosão no frame
+        tabFrame.style.transformOrigin = 'center';
+        tabFrame.style.animation = 'explode 0.3s ease-out forwards';
+        
+        // Cria partículas de fumaça
+        for (let i = 0; i < 15; i++) {
+            createSmokeParticle(centerX, centerY);
+        }
+        
+        // Remove o frame após a animação
+        setTimeout(() => {
+            tabFrame.remove();
+            
+            // Remove a aba da lista de abas do board
+            const board = boards[boardId];
+            board.tabs = board.tabs.filter(tab => tab.id !== id);
+            
+            if (activeTabId === id) {
+            activeTabId = null;
+            board.activeTabId = null;
+            }
+            
+            saveState();
+        }, 300);
     });
 
     refreshBtn.addEventListener('click', (e) => {
@@ -5115,8 +5162,36 @@ btnAdBlocker.addEventListener('click', (e) => {
 
     btnClose.addEventListener('click', (e) => {
         e.stopPropagation();
-        closeTab(id);
-        saveState();
+        
+        // Animação de explosão
+        const tabRect = tabFrame.getBoundingClientRect();
+        const centerX = tabRect.left + tabRect.width / 2;
+        const centerY = tabRect.top + tabRect.height / 2;
+        
+        // Aplica animação de explosão no frame
+        tabFrame.style.transformOrigin = 'center';
+        tabFrame.style.animation = 'explode 0.3s ease-out forwards';
+        
+        // Cria partículas de fumaça
+        for (let i = 0; i < 15; i++) {
+            createSmokeParticle(centerX, centerY);
+        }
+        
+        // Remove o frame após a animação
+        setTimeout(() => {
+            tabFrame.remove();
+            
+            // Remove a aba da lista de abas do board
+            const board = boards[boardId];
+            board.tabs = board.tabs.filter(tab => tab.id !== id);
+            
+            if (activeTabId === id) {
+            activeTabId = null;
+            board.activeTabId = null;
+            }
+            
+            saveState();
+        }, 300);
     });
 
     refreshBtn.addEventListener('click', (e) => {
@@ -5182,6 +5257,40 @@ btnAdBlocker.addEventListener('click', (e) => {
     updatePinButton();
 
     return id;
+}
+
+function createSmokeParticle(x, y) {
+  const particle = document.createElement('div');
+  particle.classList.add('smoke-particle');
+  
+  // Tamanho aleatório
+  const size = Math.random() * 15 + 5;
+  particle.style.width = `${size}px`;
+  particle.style.height = `${size}px`;
+  
+  // Posição inicial
+  particle.style.left = `${x}px`;
+  particle.style.top = `${y}px`;
+  
+  // Direção aleatória
+  const angle = Math.random() * Math.PI * 2;
+  const distance = Math.random() * 100 + 50;
+  const tx = Math.cos(angle) * distance;
+  const ty = Math.sin(angle) * distance;
+  
+  particle.style.setProperty('--tx', `${tx}px`);
+  particle.style.setProperty('--ty', `${ty}px`);
+  
+  // Cor aleatória (tons de cinza)
+  const grayValue = Math.floor(Math.random() * 100 + 100);
+  particle.style.backgroundColor = `rgb(${grayValue}, ${grayValue}, ${grayValue})`;
+  
+  document.body.appendChild(particle);
+  
+  // Remove a partícula após a animação
+  setTimeout(() => {
+    particle.remove();
+  }, 1500);
 }
 
 function createTextField(savedState = null, targetBoardId = null, initialText = null) {
@@ -5343,8 +5452,26 @@ function createTextField(savedState = null, targetBoardId = null, initialText = 
 
     btnClose.addEventListener('click', (e) => {
         e.stopPropagation();
-        closeTextField(id);
-        saveState();
+        
+        // Animação de explosão
+        const tabRect = tabFrame.getBoundingClientRect();
+        const centerX = tabRect.left + tabRect.width / 2;
+        const centerY = tabRect.top + tabRect.height / 2;
+        
+        // Aplica animação de explosão no frame
+        tabFrame.style.transformOrigin = 'center';
+        tabFrame.style.animation = 'explode 0.3s ease-out forwards';
+        
+        // Cria partículas de fumaça
+        for (let i = 0; i < 15; i++) {
+            createSmokeParticle(centerX, centerY);
+        }
+        
+        // Remove o frame após a animação
+        setTimeout(() => {
+            closeTextField(id);
+            saveState();
+        }, 300);
     });
 
     btnMaximize.addEventListener('click', (e) => {
@@ -5532,10 +5659,28 @@ function createList(savedState = null, targetBoardId = null) {
     });
 
     btnClose.addEventListener('click', (e) => {
-        e.stopPropagation();
+    e.stopPropagation();
+    
+    // Animação de explosão
+    const listRect = listFrame.getBoundingClientRect();
+    const centerX = listRect.left + listRect.width / 2;
+    const centerY = listRect.top + listRect.height / 2;
+    
+    // Aplica animação de explosão no frame
+    listFrame.style.transformOrigin = 'center';
+    listFrame.style.animation = 'explode 0.3s ease-out forwards';
+    
+    // Cria partículas de fumaça
+    for (let i = 0; i < 15; i++) {
+        createSmokeParticle(centerX, centerY);
+    }
+    
+    // Remove o frame após a animação
+    setTimeout(() => {
         closeList(id);
         saveState();
-    });
+    }, 300);
+});
 
     btnMaximize.addEventListener('click', (e) => {
         e.stopPropagation();
