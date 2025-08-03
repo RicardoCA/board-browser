@@ -2083,11 +2083,11 @@ cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' wid
 @keyframes fadeInScale {
     0% {
         opacity: 0;
-        transform: scale(1);
+        transform: scale(3);
     }
     100% {
         opacity: 1;
-        transform: scale(0.5);
+        transform: scale(1);
     }
 }
 
