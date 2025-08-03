@@ -550,7 +550,20 @@
 
 <script>
 let VERSION = 'Beta 3.0'
+
+const fs = require('fs');
+const path = require('path');
+
 let apiKey = '';
+
+try {
+  const configPath = path.join(__dirname, '/src/config.json');
+  const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  apiKey = config.apiKey || '';
+} catch (error) {
+  console.error('Error loading API key:', error);
+  // Você pode querer mostrar um aviso ao usuário ou usar um fallback
+}
 
 
 let firstUseDate = localStorage.getItem('firstUseDate');
